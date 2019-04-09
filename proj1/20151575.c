@@ -8,7 +8,7 @@
 #include<unistd.h>
 
 #define BUF_SIZE 32
-#define INIT do{\
+#define INIT(devices) do{\
 }while(0)
 //input device : switch, prog, vol+/-, back
 
@@ -18,23 +18,24 @@ typedef struct _fpga_devices{
     unsigned int led_data;
     int dot_number;
 }fpga_devices;
-struct msg_input{
+typedef struct _msg_input{
     long msgtype;
     char buf[BUF_SIZE];
-};
-struct msg_output{
+}msg_input;
+typedef struct _msg_output{
     long msgtype;
     char buf[BUF_SIZE];
-};
+}msg_output;
 
 void main_process(int,int);
 void input_process();
 void output_process();
-struct msg_output* mode_clock(fpga_devices *);
-struct msg_output* mode_counter(fpga_devices *);
-struct msg_output* mode_text_editor(fpga_devices *);
-struct msg_output* mode_draw_board(fpga_devices *);
-struct msg_output* mode_foo(fpga_devices *);
+
+msg_output* mode_clock(msg_input *, fpga_devices *);
+msg_output* mode_counter(msg_input *, fpga_devices *);
+msg_output* mode_text_editor(msg_input *, fpga_devices *);
+msg_output* mode_draw_board(msg_input *, fpga_devices *);
+msg_output* mode_foo(msg_input *, fpga_devices *);
 
 int main(){
     pid_t pid_input=0, pid_output =0;
@@ -64,13 +65,12 @@ int main(){
     return 0;
 }
 void main_process(pid_t pid_input,pid_t pid_output){
-    struct msg_input imsg;
-    struct msg_output *omsg = NULL;
+    msg_input imsg;
+    msg_output *omsg = NULL;
     fpga_devices now;
-
-    short mode=0;
     key_t key_input_id, key_output_id;
-    struct msg_output* (*mode_functions[5])(fpga_devices *);
+    msg_output* (*mode_functions[5])(msg_input*, fpga_devices *);
+    short mode=0;
 
     printf("main start!\n");
 
@@ -95,32 +95,43 @@ void main_process(pid_t pid_input,pid_t pid_output){
     while(1){
         if (msgrcv( key_input_id, (void *)&imsg, sizeof(imsg), 1, IPC_NOWAIT) == 0)
         {
-            //check imsg ,change mode?
-            if(imsg.buf[0] == 'C'){
-                mode++;
-                mode%=5;
-                INIT;
-            }
-            omsg=mode_functions[mode](&now);
-            if(msgsnd(key_output_id,(void*)&omsg,sizeof(omsg),0) == -1){
-                perror("error!!\n");
+            if(0){
+                // exit all
+                waitpid(pid_output,NULL,0);
                 exit(0);
             }
+            else if(imsg.buf[0] == 'C'){
+                //check imsg ,change mode?
+                mode++;
+                mode%=5;
+                INIT(now);
+            }
+            omsg=mode_functions[mode](&imsg,&now);
+        }
+        else
+            omsg=mode_functions[mode](NULL,&now);
+
+        if (omsg == NULL)
+            continue;
+
+        if(msgsnd(key_output_id,(void*)&omsg,sizeof(omsg),0) == -1){
+            perror("error!!\n");
+            exit(0);
         }
     }
 }
-struct msg_output* mode_clock(fpga_devices *now){
+msg_output* mode_clock(msg_input *imsg, fpga_devices *now){
 }
-struct msg_output* mode_counter(fpga_devices *now){
+msg_output* mode_counter(msg_input *imsg, fpga_devices *now){
 }
-struct msg_output* mode_text_editor(fpga_devices *now){
+msg_output* mode_text_editor(msg_input *imsg, fpga_devices *now){
 }
-struct msg_output* mode_draw_board(fpga_devices *now){
+msg_output* mode_draw_board(msg_input *imsg, fpga_devices *now){
 }
-struct msg_output* mode_foo(fpga_devices *now){
+msg_output* mode_foo(msg_input *imsg, fpga_devices *now){
 }
 void input_process(){
-    struct msg_input msg;
+    msg_input msg;
     key_t key_id;
 
     printf("input start!\n");
@@ -146,7 +157,7 @@ void input_process(){
     exit(1);
 }
 void output_process(){
-    struct msg_output msg;
+    msg_output msg;
     key_t key_id;
 
     printf("output start!\n");
@@ -162,7 +173,7 @@ void output_process(){
 
         if (msgrcv( key_id, (void *)&msg, sizeof(msg), 1,0) == 0){
             printf("In output, ");
-            
+
         }
     }
     exit(1);
