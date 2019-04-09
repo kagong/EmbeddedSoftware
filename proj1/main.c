@@ -6,36 +6,22 @@
 #include<sys/wait.h>
 #include<sys/msg.h>
 #include<unistd.h>
+#include "global.h"
+#include "input_process.h"
+#include "output_process.h"
 
-#define BUF_SIZE 32
 #define INIT(devices) do{\
 }while(0)
 //input device : switch, prog, vol+/-, back
 
-typedef struct _fpga_devices{
-    unsigned char string[32];
-    unsigned char fnd_data[4];
-    unsigned int led_data;
-    int dot_number;
-}fpga_devices;
-typedef struct _msg_input{
-    long msgtype;
-    char buf[BUF_SIZE];
-}msg_input;
-typedef struct _msg_output{
-    long msgtype;
-    char buf[BUF_SIZE];
-}msg_output;
 
 void main_process(int,int);
-void input_process();
-void output_process();
 
-msg_output* mode_clock(msg_input *, fpga_devices *);
-msg_output* mode_counter(msg_input *, fpga_devices *);
-msg_output* mode_text_editor(msg_input *, fpga_devices *);
-msg_output* mode_draw_board(msg_input *, fpga_devices *);
-msg_output* mode_foo(msg_input *, fpga_devices *);
+static msg_output* mode_clock(msg_input *, fpga_devices *);
+static msg_output* mode_counter(msg_input *, fpga_devices *);
+static msg_output* mode_text_editor(msg_input *, fpga_devices *);
+static msg_output* mode_draw_board(msg_input *, fpga_devices *);
+static msg_output* mode_foo(msg_input *, fpga_devices *);
 
 int main(){
     pid_t pid_input=0, pid_output =0;
@@ -130,52 +116,3 @@ msg_output* mode_draw_board(msg_input *imsg, fpga_devices *now){
 }
 msg_output* mode_foo(msg_input *imsg, fpga_devices *now){
 }
-void input_process(){
-    msg_input msg;
-    key_t key_id;
-
-    printf("input start!\n");
-
-    memset(&msg,0,sizeof(msg));
-
-    key_id = msgget((key_t)875,IPC_CREAT|0666);
-    if(key_id == -1){
-        perror("error!!\n");
-        exit(0);
-    }
-    while(1){
-        char temp = 0;
-        msg.msgtype = 1;
-        msg.buf[0] = ++temp;
-
-        if(msgsnd(key_id,(void*)&msg,sizeof(msg),0) == -1){
-            perror("error!!\n");
-            exit(0);
-        }
-        sleep(1);
-    }
-    exit(1);
-}
-void output_process(){
-    msg_output msg;
-    key_t key_id;
-
-    printf("output start!\n");
-
-    memset(&msg,0,sizeof(msg));
-
-    key_id = msgget((key_t)5975,IPC_CREAT|0666);
-    if(key_id == -1){
-        perror("error!!\n");
-        exit(0);
-    }
-    while(1){
-
-        if (msgrcv( key_id, (void *)&msg, sizeof(msg), 1,0) == 0){
-            printf("In output, ");
-
-        }
-    }
-    exit(1);
-}
-
