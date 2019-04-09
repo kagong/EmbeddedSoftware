@@ -79,19 +79,25 @@ void main_process(pid_t pid_input,pid_t pid_output){
     }
 
     while(1){
-        if (msgrcv( key_input_id, (void *)&imsg, sizeof(imsg), 1, IPC_NOWAIT) == 0)
+        if (msgrcv( key_input_id, &imsg, sizeof(imsg)-sizeof(long), 0, IPC_NOWAIT) != -1)
         {
-            if(0){
-                // exit all
-                waitpid(pid_output,NULL,0);
-                exit(0);
+            if(imsg.msgtype == 1){
+                switch(imsg.code){
+                    case POWER_OFF:
+                        // todo
+                        waitpid(pid_output,NULL,0);
+                        exit(0);
+                        break;
+                    case MODE_UP:
+                        mode+=2;
+                    case MODE_DOWN
+                        mode -=1;
+                        mode%=5;
+                        INIT(now);
+                        break;
+                }
             }
-            else if(imsg.buf[0] == 'C'){
-                //check imsg ,change mode?
-                mode++;
-                mode%=5;
-                INIT(now);
-            }
+            else
             omsg=mode_functions[mode](&imsg,&now);
         }
         else
