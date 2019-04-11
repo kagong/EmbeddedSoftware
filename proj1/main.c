@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include<stdbool.h>
 #include<sys/types.h>
 #include<sys/ipc.h>
 #include<sys/wait.h>
@@ -10,18 +11,27 @@
 #include "input_process.h"
 #include "output_process.h"
 
-#define INIT(devices) do{\
+#define ERR false
+#define NOMAL true
+
+#define EXIT_HANDLING(flag) do{\
+    if(flag == ERR)\
+        perror("error!!\n");\
+    msgsnd(key_output_id,&msg_error,sizeof(msg_input)-sizeof(long),0);\
+    waitpid(pid_input,NULL,0);\
+    waitpid(pid_output,NULL,0);\
+    exit(0);\
 }while(0)
-//input device : switch, prog, vol+/-, back
 
 
 void main_process(int,int);
 
-static msg_output* mode_clock(msg_input *, fpga_devices *);
-static msg_output* mode_counter(msg_input *, fpga_devices *);
-static msg_output* mode_text_editor(msg_input *, fpga_devices *);
-static msg_output* mode_draw_board(msg_input *, fpga_devices *);
-static msg_output* mode_foo(msg_input *, fpga_devices *);
+
+void mode_clock(msg_input *imsg, fpga_devices *now, msg_output *omsg);
+void mode_counter(msg_input *imsg, fpga_devices *now, msg_output *omsg);
+void mode_text_editor(msg_input *imsg, fpga_devices *now, msg_output *omsg);
+void mode_draw_board(msg_input *imsg, fpga_devices *now, msg_output *omsg);
+void mode_foo(msg_input *imsg, fpga_devices *now, msg_output *omsg);
 
 int main(){
     pid_t pid_input=0, pid_output =0;
@@ -52,18 +62,17 @@ int main(){
 }
 void main_process(pid_t pid_input,pid_t pid_output){
     msg_input imsg;
-    msg_output *omsg = NULL;
+    msg_output omsg,msg_error;
     fpga_devices now;
     key_t key_input_id, key_output_id;
-    msg_output* (*mode_functions[5])(msg_input*, fpga_devices *);
+    void (*mode_functions[5])(msg_input*, fpga_devices *, msg_output*);
     short mode=0;
 
     printf("main start!\n");
 
-    memset(&imsg,0,sizeof(imsg));
-
-    key_input_id = msgget((key_t)875,IPC_CREAT|0666);
-    key_output_id = msgget((key_t)5975,IPC_CREAT|0666);
+    memset(&now,0,sizeof(fpga_devices));
+    memset(&msg_error,0,sizeof(msg_error));
+    msg_error.msgtype = 1;
 
     mode_functions[0] = mode_clock;
     mode_functions[1] = mode_counter;
@@ -71,54 +80,54 @@ void main_process(pid_t pid_input,pid_t pid_output){
     mode_functions[3] = mode_draw_board;
     mode_functions[4] = mode_foo;
 
-    if(key_input_id == -1 || key_output_id == -1){
-        perror("error!!\n");
-        waitpid(pid_input,NULL,0);
-        waitpid(pid_output,NULL,0);
-        exit(0);
-    }
+    key_input_id = msgget((key_t)875,IPC_CREAT|0666);
+    key_output_id = msgget((key_t)5975,IPC_CREAT|0666);
+
+    if(key_input_id == -1 || key_output_id == -1)
+        EXIT_HANDLING(ERR);
+    
 
     while(1){
+        memset(&omsg,0,sizeof(omsg));
+        memset(&imsg,0,sizeof(imsg));
+
         if (msgrcv( key_input_id, &imsg, sizeof(imsg)-sizeof(long), 0, IPC_NOWAIT) != -1)
         {
             if(imsg.msgtype == 1){
-                switch(imsg.code){
+                switch(imsg.data.code){
                     case POWER_OFF:
-                        // todo
-                        waitpid(pid_output,NULL,0);
-                        exit(0);
-                        break;
+                        EXIT_HANDLING(NOMAL);
                     case MODE_UP:
                         mode+=2;
-                    case MODE_DOWN
+                    case MODE_DOWN:
                         mode -=1;
                         mode%=5;
-                        INIT(now);
+                        memset(&now,0,sizeof(fpga_devices));
+                        omsg.msgtype = mode+2;
                         break;
                 }
             }
             else
-            omsg=mode_functions[mode](&imsg,&now);
+                mode_functions[mode](&imsg,&now,&omsg);
         }
-        else
-            omsg=mode_functions[mode](NULL,&now);
+        //else
+          //  mode_functions[mode](NULL,&now,&omsg);
 
-        if (omsg == NULL)
+        if (omsg.msgtype == 0)
             continue;
 
-        if(msgsnd(key_output_id,(void*)&omsg,sizeof(omsg),0) == -1){
-            perror("error!!\n");
-            exit(0);
-        }
+        if(msgsnd(key_output_id,&omsg,sizeof(omsg)-sizeof(long),0) == -1) 
+            EXIT_HANDLING(ERR);
     }
 }
-msg_output* mode_clock(msg_input *imsg, fpga_devices *now){
+//output msg가 없을 수도.
+void mode_clock(msg_input *imsg, fpga_devices *now, msg_output *omsg){
 }
-msg_output* mode_counter(msg_input *imsg, fpga_devices *now){
+void mode_counter(msg_input *imsg, fpga_devices *now, msg_output *omsg){
 }
-msg_output* mode_text_editor(msg_input *imsg, fpga_devices *now){
+void mode_text_editor(msg_input *imsg, fpga_devices *now, msg_output *omsg){
 }
-msg_output* mode_draw_board(msg_input *imsg, fpga_devices *now){
+void mode_draw_board(msg_input *imsg, fpga_devices *now, msg_output *omsg){
 }
-msg_output* mode_foo(msg_input *imsg, fpga_devices *now){
+void mode_foo(msg_input *imsg, fpga_devices *now, msg_output *omsg){
 }
