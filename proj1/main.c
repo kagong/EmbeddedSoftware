@@ -18,7 +18,7 @@
 #define EXIT_HANDLING(flag) do{\
     if(flag == ERR)\
     perror("error!!\n");\
-    msgsnd(key_output_id,&msg_error,sizeof(msg_input)-sizeof(long),0);\
+    msgsnd(key_output_id,&msg_error,sizeof(msg_input),0);\
     waitpid(pid_input,NULL,0);\
     waitpid(pid_output,NULL,0);\
     exit(0);\
@@ -33,12 +33,12 @@
 
 #define TIME_UP_HOUR do{\
     TIME_UP(0,1);\
-    if(now ->fnd_data[0]*10 + now->fnd_data[1] > 24)\
+    if(now ->fnd_data[0]*10 + now->fnd_data[1] >= 24)\
     now -> fnd_data[0] = now -> fnd_data[1] = 0;\
 }while(0);
 #define TIME_UP_MIN do{\
     TIME_UP(2,3);\
-    if(now ->fnd_data[2]*10 + now->fnd_data[3] > 60){\
+    if(now ->fnd_data[2]*10 + now->fnd_data[3] >= 60){\
         now -> fnd_data[2] = now -> fnd_data[3] = 0;\
         TIME_UP_HOUR;\
     }\
@@ -80,7 +80,7 @@ int main(){
 
     pid_input = fork();
     if(pid_input == 0){
-        input_process();
+       input_process();
         return 0;
     }
     else if(pid_input < 0){
@@ -109,6 +109,7 @@ void main_process(pid_t pid_input,pid_t pid_output){
     key_t key_input_id, key_output_id;
     void (*mode_functions[5])(msg_input*, fpga_devices *, msg_output*);
     short mode=0;
+    int n;
 
     printf("main start!\n");
 
@@ -129,11 +130,16 @@ void main_process(pid_t pid_input,pid_t pid_output){
         EXIT_HANDLING(ERR);
 
 
+    mode_functions[0](NULL,&now,&omsg);
+    msgsnd(key_output_id,&omsg,sizeof(omsg),0);
+        
     while(1){
+        sleep(1);
         memset(&omsg,0,sizeof(omsg));
         memset(&imsg,0,sizeof(imsg));
 
-        if (msgrcv( key_input_id, &imsg, sizeof(imsg)-sizeof(long), 0, IPC_NOWAIT) != -1)
+        n = msgrcv( key_input_id, &imsg, sizeof(imsg), 0, IPC_NOWAIT);
+        if (n != -1)
         {
             if(imsg.msgtype == 1){
                 switch(imsg.data.code){
@@ -151,14 +157,13 @@ void main_process(pid_t pid_input,pid_t pid_output){
             }
             else
                 mode_functions[mode](&imsg,&now,&omsg);
+        
         }
-        //else
-        //  mode_functions[mode](NULL,&now,&omsg);
 
         if (omsg.msgtype == 0)
             continue;
 
-        if(msgsnd(key_output_id,&omsg,sizeof(omsg)-sizeof(long),0) == -1) 
+        if(msgsnd(key_output_id,&omsg,sizeof(omsg),0) == -1) 
             EXIT_HANDLING(ERR);
     }
 }
@@ -179,6 +184,8 @@ void mode_clock(msg_input *imsg, fpga_devices *now, msg_output *omsg){
         now->fnd_data[3] = min  % 10 ;
         now ->prev_h =  hour;
         now ->prev_m =  min;
+        if(imsg == NULL)
+            goto end;
     }
     for(i = 0 ; i < 10 ; i++)
         if(imsg->data.buf_switch[i] == 1)
@@ -199,30 +206,29 @@ void mode_clock(msg_input *imsg, fpga_devices *now, msg_output *omsg){
 
             break;
         case 1:
-            if ( now-> flags == 0 )
-                now->flags = 1;
-            else{
+            if ( now-> flags & 1 << 5 != 0 ){
                 now -> prev_h = hour;
                 now -> prev_m = min;
-                now -> flags = 0;
             }
+            now -> flags ^= 1 << 5;
             break;
         case 3:
-            if(now->flags){
+            if(now->flags & 1<<5){
                 TIME_UP_HOUR;
             }
             break;
         case 4:
-            if(now->flags){
+            if(now->flags & 1<< 5){
                 TIME_UP_MIN;
             }
             break;
     }
-    if(now->flags == 0 && min != now -> prev_m){
+    if(now->flags & 1<< 5 == 0 && min != now -> prev_m){
         now -> prev_m = min;
         now -> prev_m = hour;
         TIME_UP_MIN;
     }
+end:
     omsg -> msgtype =2; 
     omsg->fnd_data[0] = now -> fnd_data[0];
     omsg->fnd_data[1] = now -> fnd_data[1];

@@ -28,8 +28,8 @@
 void output_process(){
     msg_output msg;
     key_t key_id;
-	unsigned long *fpga_addr = 0;
-	unsigned char *led_addr =0;
+    unsigned long *fpga_addr = 0;
+    unsigned char *led_addr =0;
 
     int i, mode = 2;
     int dev_dot,dev_text,dev_fnd,dev_led;
@@ -51,7 +51,7 @@ void output_process(){
     dev_dot  = open(FPGA_DOT_DEVICE, O_WRONLY);
     dev_text = open(FPGA_TEXT_LCD_DEVICE, O_WRONLY);
     dev_fnd  = open(FPGA_FND_DEVICE, O_WRONLY);
-	dev_led = open( FPGA_LED_DEVICE, O_WRONLY | O_SYNC); //memory device open
+    dev_led = open( FPGA_LED_DEVICE, O_RDWR | O_SYNC); //memory device open
 
     if(dev_dot < 0 || dev_text < 0 || dev_fnd < 0){
         printf("error!\n");
@@ -61,10 +61,12 @@ void output_process(){
         exit(0);
     }
 
-	fpga_addr = (unsigned long *)mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_SHARED,
+    fpga_addr = (unsigned long *)mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_SHARED,
             dev_led, FPGA_BASE_ADDRESS);
-	led_addr=(unsigned char*)((void*)fpga_addr+LED_ADDR);
-	if (fpga_addr == MAP_FAILED) {
+    led_addr=(unsigned char*)((void*)fpga_addr+LED_ADDR);
+    if (fpga_addr == MAP_FAILED) {
+        printf("error\n");
+        exit(0);
     }
 
     INIT_DEV;
@@ -72,15 +74,17 @@ void output_process(){
     key_id = msgget((key_t)5975,IPC_CREAT|0666);
     if(key_id == -1){
         perror("error!!\n");
-	    munmap(led_addr, 4096); 
+        munmap(led_addr, 4096); 
         close(dev_dot);
         close(dev_text);
         close(dev_fnd);
         exit(0);
     }
-
+    int temp;
     while(1){
-        if (msgrcv( key_id, &msg, sizeof(msg)-sizeof(long), 0,IPC_NOWAIT) != -1){
+        usleep(4000);
+        temp = msgrcv( key_id, &msg, sizeof(msg), 0,IPC_NOWAIT) ;
+        if(temp != -1){
             if(msg.msgtype == 1){
                 close(dev_dot);
                 close(dev_text);
@@ -97,7 +101,7 @@ void output_process(){
                 devices.fnd_data[i] = msg.fnd_data[i];
 
             if(mode == 2){//clock
-                devices.flash_led_34_flag = msg.flags;
+                devices.flash_led_34_flag = msg.flags & 1 << 5;
                 if(!devices.flash_led_34_flag){
                     devices.led_data = 1<<7;
                     *led_addr = devices.led_data;
@@ -134,6 +138,7 @@ void output_process(){
                 sleep(1);
                 devices.led_data = (1<<4);
                 *led_addr = devices.led_data;
+                sleep(1);
             }
             else if(devices.flash_cursur_flag){
 

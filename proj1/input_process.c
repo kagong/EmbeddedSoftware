@@ -61,12 +61,13 @@ void input_process(){
 
     sw_buf_size=sizeof(sw_buf);
 
+    printf("%d\n",key_id);
     while(1){
-        usleep(400000);
+        usleep(4000);
         memset(&msg,0,sizeof(msg));
 
         if(read(dev_readkey, ev, ev_size * BUFF_SIZE) >= ev_size){
-            for(int i = 0 ; i < 3 ; i++){
+            for(i = 0 ; i < 3 ; i++){
                 if(prev[i].code == ev[0].code){
                     if(prev[i].value == 1 && ev[0].value == 0){
                         msg.msgtype = 1;
@@ -91,9 +92,12 @@ void input_process(){
         if(msg.msgtype == 1 && msg.data.code == POWER_OFF){
             EXIT_HANDLING;
         }
-        else if(msg.msgtype != 0 && msgsnd(key_id,(void*)&msg,sizeof(msg),0) == -1){
-            perror("error!!\n");
-            EXIT_HANDLING;
+        else if(msg.msgtype != 0){
+            int a = msgsnd(key_id,&msg,sizeof(msg),0);
+                if(a == -1){
+                perror("error!!\n");
+                EXIT_HANDLING;
+            }
         }
     }
     exit(1);
