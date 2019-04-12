@@ -7,6 +7,7 @@
 #include<sys/wait.h>
 #include<sys/msg.h>
 #include<unistd.h>
+#include<time.h>
 #include "global.h"
 #include "input_process.h"
 #include "output_process.h"
@@ -16,14 +17,55 @@
 
 #define EXIT_HANDLING(flag) do{\
     if(flag == ERR)\
-        perror("error!!\n");\
+    perror("error!!\n");\
     msgsnd(key_output_id,&msg_error,sizeof(msg_input)-sizeof(long),0);\
     waitpid(pid_input,NULL,0);\
     waitpid(pid_output,NULL,0);\
     exit(0);\
 }while(0)
+#define TIME_UP(n,m) do{\
+    now -> fnd_data[m] += 1;\
+    if(now -> fnd_data[m] > 9){\
+        now -> fnd_data[m] = 0;\
+        now -> fnd_data[n] += 1;\
+    }\
+}while(0)
 
+#define TIME_UP_HOUR do{\
+    TIME_UP(0,1);\
+    if(now ->fnd_data[0]*10 + now->fnd_data[1] > 24)\
+    now -> fnd_data[0] = now -> fnd_data[1] = 0;\
+}while(0);
+#define TIME_UP_MIN do{\
+    TIME_UP(2,3);\
+    if(now ->fnd_data[2]*10 + now->fnd_data[3] > 60){\
+        now -> fnd_data[2] = now -> fnd_data[3] = 0;\
+        TIME_UP_HOUR;\
+    }\
+}while(0);
 
+#define FLAG_TO_NOTATION  now -> flags >> 6 * 1 + now -> flags >> 5 * 2 + now -> flags >> 4 * 3 
+#define CHANGE_NOTATION(from,to) do{\
+    for(i=0;i<4;i++)\
+    result += now -> fnd_data[i]*_exp[from][i];\
+    for(i=0;i<4;i++){\
+        now -> fnd_data[i] = result / _exp[to][i];\
+        result %= _exp[to][i];\
+    }\
+    if(now -> fnd_data[0] >= max_notation[to])\
+    now -> fnd_data[0] = 0;\
+}while(0)
+const int _exp[4][4]={
+    {1<<3,1<<2,1<<1,1},
+    {1000,100,10,1},
+    {1<<9,1<<6,1<<3,1},
+    {1<<6,1<<4,1<<2,1}
+};
+const int max_notation[4]={2,10,8,4};
+const unsigned char A_1[2][10]={
+    {0x1c,0x36,0x63,0x63,0x63,0x7f,0x7f,0x63,0x63,0x63},
+    {0x0c,0x1c,0x1c,0x0c,0x0c,0x0c,0x0c,0x0c,0x0c,0x1e}, // 1
+};
 void main_process(int,int);
 
 
@@ -85,7 +127,7 @@ void main_process(pid_t pid_input,pid_t pid_output){
 
     if(key_input_id == -1 || key_output_id == -1)
         EXIT_HANDLING(ERR);
-    
+
 
     while(1){
         memset(&omsg,0,sizeof(omsg));
@@ -111,7 +153,7 @@ void main_process(pid_t pid_input,pid_t pid_output){
                 mode_functions[mode](&imsg,&now,&omsg);
         }
         //else
-          //  mode_functions[mode](NULL,&now,&omsg);
+        //  mode_functions[mode](NULL,&now,&omsg);
 
         if (omsg.msgtype == 0)
             continue;
@@ -122,10 +164,182 @@ void main_process(pid_t pid_input,pid_t pid_output){
 }
 //output msg가 없을 수도.
 void mode_clock(msg_input *imsg, fpga_devices *now, msg_output *omsg){
+    int hour,min,i;
+    time_t timer;
+    struct tm *t;
+    timer = time(NULL);
+    t = localtime(&timer);
+    hour = t->tm_hour;
+    min = t -> tm_min;
+    if(now->flags == 0){//start mode 1
+        now->flags = 1<<7;      //led_1
+        now->fnd_data[0] = hour / 10 ;
+        now->fnd_data[1] = hour % 10 ;
+        now->fnd_data[2] = min  / 10 ;
+        now->fnd_data[3] = min  % 10 ;
+        now ->prev_h =  hour;
+        now ->prev_m =  min;
+    }
+    for(i = 0 ; i < 10 ; i++)
+        if(imsg->data.buf_switch[i] == 1)
+            break;
+
+    if(i > 10){
+        printf("error!\n");
+        return;
+    }
+    switch(i-1){
+        case 2:
+
+            now->fnd_data[0] = hour / 10;
+            now->fnd_data[1] = hour % 10;
+            now->fnd_data[2] = min  / 10;
+            now->fnd_data[3] = min  % 10;
+            now->flags = 1 << 7;
+
+            break;
+        case 1:
+            if ( now-> flags & 1 == 0 )
+                now->flags = 1;
+            else{
+                now -> prev_h = hour;
+                now -> prev_m = min;
+                now -> flags = 1<<7;
+            }
+            break;
+        case 3:
+            TIME_UP_HOUR;
+            break;
+        case 4:
+            TIME_UP_MIN;
+            break;
+    }
+    if(min != now -> prev_m){
+        now -> prev_m = min;
+        now -> prev_m =hour;
+        TIME_UP_MIN;
+    }
+    omsg->fnd_data[0] = now -> fnd_data[0];
+    omsg->fnd_data[1] = now -> fnd_data[1];
+    omsg->fnd_data[2] = now -> fnd_data[2];
+    omsg->fnd_data[3] = now -> fnd_data[3];
+    omsg -> flags = now -> flags;
+
 }
 void mode_counter(msg_input *imsg, fpga_devices *now, msg_output *omsg){
+    int i,prev_n,n,target,result=0;
+    if(now -> flags == 0){
+        now->flags = 1<< 6;
+    }
+    for(i = 0 ; i < 4 ; i++)
+        if(imsg->data.buf_switch[i] == 1)
+            break;
+    if(i>3)
+        return ;
+    target = i;
+    switch(target){
+        //bin n=0, dec n=1, oct n=2, quad n=3
+        case 0:
+            prev_n = FLAG_TO_NOTATION;
+
+            now->flags >>= 1;
+            if(now -> flags < 1 << 4)
+                now -> flags = 1<< 7;
+
+            n = FLAG_TO_NOTATION;
+            CHANGE_NOTATION(prev_n,n);
+            break;
+        case 1:
+        case 2:
+        case 3:
+            now->fnd_data[i] += 1;
+            n = FLAG_TO_NOTATION;
+            CHANGE_NOTATION(n,n);
+            break;
+    }
+    omsg -> msgtype = 2; 
+    omsg->fnd_data[0] = now -> fnd_data[0];
+    omsg->fnd_data[1] = now -> fnd_data[1];
+    omsg->fnd_data[2] = now -> fnd_data[2];
+    omsg->fnd_data[3] = now -> fnd_data[3];
+    omsg -> flags = now -> flags; 
+
 }
 void mode_text_editor(msg_input *imsg, fpga_devices *now, msg_output *omsg){
+    //all 27 char, splity by 9
+    //now ->text_idx is next of last text
+    char *ABC = ".ADGJMPTWQBEHKNRUXZCFILOSVY";
+    int i,n=0,match_idx,target_idx,result = 0;
+    char target = 0;
+    if(now -> dot_matrix[0] == 0){//start_mode3
+        for(i = 0 ; i < 10 ; i)
+            now -> dot_matrix[i] = A_1[0][i];
+    }
+    for(i = 0 ; i < 9 ; i++)
+        if(imsg -> data.buf_switch[i] == 1){
+            n++;
+            match_idx = i;
+        }
+
+    if(n > 2 || n == 0){
+        return ;
+    }
+    else if(n == 2){
+        //sw 2 & 3 clear
+        if(imsg -> data.buf_switch[1] && imsg -> data.buf_switch[2]){
+            memset(now->text_data,0,sizeof(now->text_data));
+            now -> text_idx = 0;
+        }
+        //sw 5&6 change a -> 1 (now ->flags = 1 or 0)
+        else if(imsg -> data.buf_switch[4] && imsg -> data.buf_switch[5]){
+            now -> flags = !now -> flags;
+            for(i = 0 ; i < 10 ; i)
+                now -> dot_matrix[i] = A_1[now -> flags][i];
+        }
+        //sw 8 & 9 black
+        else if(imsg -> data.buf_switch[7] && imsg -> data.buf_switch[8]){
+            target = ' ';
+        }
+        else
+            return ;
+    }
+    else{
+        if(!now -> flags ){
+            target = ABC[match_idx];
+            for(i = 0 ; now -> text_idx !=0 && i < 3 ; i++){
+                if(now -> text_data[now->text_idx-1] == ABC[9*i+match_idx]){
+                    target = ABC[9*((i+1)%3)+match_idx];
+                    break;
+                }
+            }
+        }
+        else
+            target = match_idx + '1';
+    }
+    if(target != 0){
+        if(now->text_idx == LEN_TEXT){
+            for( i = 1 ; i < LEN_TEXT; i++)
+                now -> text_data[i-1] = now -> text_data[i];
+            now->text_data[i-1] = target;
+        }
+        else
+            now->text_data[now->text_idx++] = target;
+    }
+
+    now->fnd_data[3] += 1;
+    CHANGE_NOTATION(10,10);
+
+    omsg -> msgtype = 3; 
+    omsg->fnd_data[0] = now -> fnd_data[0];
+    omsg->fnd_data[1] = now -> fnd_data[1];
+    omsg->fnd_data[2] = now -> fnd_data[2];
+    omsg->fnd_data[3] = now -> fnd_data[3];
+    for(i=0;i<LEN_TEXT;i++)
+        omsg -> data.mode3.text_data[i] = now -> text_data[i];
+    for(i=0;i<10;i++)
+        omsg -> data.mode3.dot_matrix[i] = now -> dot_matrix[i];
+
+
 }
 void mode_draw_board(msg_input *imsg, fpga_devices *now, msg_output *omsg){
 }

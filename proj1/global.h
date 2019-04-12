@@ -1,6 +1,9 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
+#include<time.h>
+#include<sys/types.h>
+
 #define LEN_TEXT    32
 #define MAX_BUTTON  9
 #define BUF_SIZE    32
@@ -12,8 +15,10 @@ typedef struct _fpga_devices{
     unsigned char fnd_data[4];
     unsigned char flags; 
     unsigned char text_data[LEN_TEXT];
+    unsigned char text_idx;
     unsigned char dot_matrix[10];
     unsigned char cursur[2];
+    int prev_h,prev_m;
 }fpga_devices;
 
 typedef struct _msg_input{
