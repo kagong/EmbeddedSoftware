@@ -97,33 +97,26 @@ void output_process(){
                 devices.fnd_data[i] = msg.fnd_data[i];
 
             if(mode == 2){//clock
-                devices.flash_led_34_flag = msg.flags & 0x02;
+                devices.flash_led_34_flag = msg.flags;
                 if(!devices.flash_led_34_flag){
                     devices.led_data = 1<<7;
                     *led_addr = devices.led_data;
-                    write(dev_fnd,&devices.fnd_data,4);
                 }
+                write(dev_fnd,&devices.fnd_data,4);
             }
             else if(mode == 3){//counter
-                /*
-                led[1] = msg.flags & 0x08;
-                led[2] = msg.flags & 0x04;
-                led[3] = msg.flags & 0x02;
-                led[4] = msg.flags & 0x01;
-                */
                 devices.led_data = msg.flags;
-//led 확인 필요
                 *led_addr = devices.led_data;
                 write(dev_fnd,&devices.fnd_data,4);
             }
             else if(mode == 4){//text
                 for(i=0;i<10;i++)
-                    devices.dot_matrix[i] = msg.data.mode4.dot_matrix[i];
+                    devices.dot_matrix[i] = msg.data.mode3.dot_matrix[i];
                 write(dev_text,msg.data.mode3.text_data,LEN_TEXT);	
                 write(dev_dot,devices.dot_matrix,sizeof(devices.dot_matrix));
             }
             else if(mode == 5){//draw
-                devices.flash_cursur_flag = msg.flags & 0x01;
+                devices.flash_cursur_flag = msg.flags;
                 devices.cursur[0] = msg.data.mode4.cursur[0];
                 devices.cursur[1] = msg.data.mode4.cursur[1];
                 for(i=0;i<10;i++)
@@ -143,7 +136,10 @@ void output_process(){
                 *led_addr = devices.led_data;
             }
             else if(devices.flash_cursur_flag){
-//todo
+
+                devices.dot_matrix[devices.cursur[0]] ^= 0x40 >> devices.cursur[1];
+                sleep(1);
+                devices.dot_matrix[devices.cursur[0]] ^= 0x40 >> devices.cursur[1];
             }
         }
     }

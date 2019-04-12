@@ -88,7 +88,7 @@ void input_process(){
                 prev_sw_buf[i] = sw_buf[i];
             }
         }
-        if(msg.msgtype == 1 && msg.code == POWER_OFF){
+        if(msg.msgtype == 1 && msg.data.code == POWER_OFF){
             EXIT_HANDLING;
         }
         else if(msg.msgtype != 0 && msgsnd(key_id,(void*)&msg,sizeof(msg),0) == -1){
