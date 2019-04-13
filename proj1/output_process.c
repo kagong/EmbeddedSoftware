@@ -9,6 +9,7 @@
 #include<unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include<time.h>
 #include "global.h"
 
 #define FPGA_DOT_DEVICE "/dev/fpga_dot"
@@ -42,6 +43,7 @@ void output_process(){
         unsigned char cursur[2];
         unsigned char text[LEN_TEXT];
         unsigned char dot_matrix[10];
+        time_t time_stamp;
     }devices;
 
     printf("output start!\n");
@@ -106,6 +108,11 @@ void output_process(){
                     devices.led_data = 1<<7;
                     *led_addr = devices.led_data;
                 }
+                else{
+                    time(&devices.time_stamp);
+                    devices.led_data = 1<<5;
+                    *led_addr = devices.led_data;
+                }
                 write(dev_fnd,&devices.fnd_data,4);
             }
             else if(mode == 3){//counter
@@ -132,18 +139,18 @@ void output_process(){
 
         }
         else{
-            if(devices.flash_led_34_flag){
-                devices.led_data = (1<<5);
+            time_t timer;
+            time(&timer);
+            if(devices.flash_led_34_flag && (timer != devices.time_stamp) ){
+                devices.time_stamp = timer;
+                devices.led_data ^= (1<<5);
+                devices.led_data ^= (1<<4);
                 *led_addr = devices.led_data;
-                sleep(1);
-                devices.led_data = (1<<4);
-                *led_addr = devices.led_data;
-                sleep(1);
             }
-            else if(devices.flash_cursur_flag){
+            else if(devices.flash_cursur_flag && (timer != devices.time_stamp) ){
 
                 devices.dot_matrix[devices.cursur[0]] ^= 0x40 >> devices.cursur[1];
-                sleep(1);
+                //                usleep(10000);
                 devices.dot_matrix[devices.cursur[0]] ^= 0x40 >> devices.cursur[1];
             }
         }
