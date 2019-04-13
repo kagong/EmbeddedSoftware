@@ -11,21 +11,7 @@
 #include <sys/mman.h>
 #include<time.h>
 #include "global.h"
-
-#define FPGA_DOT_DEVICE "/dev/fpga_dot"
-#define FPGA_TEXT_LCD_DEVICE "/dev/fpga_text_lcd"
-#define FPGA_FND_DEVICE "/dev/fpga_fnd"
-#define FPGA_LED_DEVICE "/dev/mem"
-#define FPGA_BASE_ADDRESS 0x08000000
-#define LED_ADDR 0x16				
-
-#define INIT_DEV do{\
-    memset(&devices,0,sizeof(devices));\
-    *led_addr = 0;\
-    write(dev_fnd,&devices.fnd_data,4);\
-    write(dev_text,devices.text,LEN_TEXT);\
-    write(dev_dot,devices.dot_matrix,sizeof(devices.dot_matrix));\
-}while(0)
+#include "macros.h"
 void output_process(){
     msg_output msg;
     key_t key_id;

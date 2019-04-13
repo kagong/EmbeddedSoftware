@@ -3,14 +3,7 @@
 
 #include<time.h>
 #include<sys/types.h>
-
-#define LEN_TEXT    32
-#define MAX_BUTTON  9
-#define BUF_SIZE    32
-#define POWER_OFF   158
-#define MODE_UP     115
-#define MODE_DOWN   114
-
+#include"macros.h"
 typedef struct _fpga_devices{
     unsigned char fnd_data[4];
     unsigned char flags; 

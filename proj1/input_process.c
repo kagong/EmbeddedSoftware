@@ -13,20 +13,12 @@
 #include <signal.h>
 #include <linux/input.h>
 #include "global.h"
+#include "macros.h"
 
-#define EXIT_HANDLING do{\
-    close(dev_switch);\
-    close(dev_readkey);\
-    msgsnd(key_id,&msg_error,sizeof(msg_input)-sizeof(long),0);\
-    exit(0);\
-}while(0)
 
-#define BUFF_SIZE 62
-#define PWD_SWITCH "/dev/fpga_push_switch"
-#define PWD_READKEY "/dev/input/event0"
 
 void input_process(){
-    struct input_event ev[BUFF_SIZE],prev[3];
+    struct input_event ev[EV_BUFF_SIZE],prev[3];
     int dev_switch,dev_readkey,sw_buf_size,ev_size = sizeof(struct input_event),i;
     msg_input msg,msg_error;
     key_t key_id;
@@ -56,7 +48,7 @@ void input_process(){
 
     if (dev_switch < 0 || dev_readkey < 0){
         printf("Device Open Error\n");
-        EXIT_HANDLING;
+        EXIT_HANDLING_INPUT;
     }
 
     sw_buf_size=sizeof(sw_buf);
@@ -66,7 +58,7 @@ void input_process(){
         usleep(70000);
         memset(&msg,0,sizeof(msg));
 
-        if(read(dev_readkey, ev, ev_size * BUFF_SIZE) >= ev_size){
+        if(read(dev_readkey, ev, ev_size * EV_BUFF_SIZE) >= ev_size){
             for(i = 0 ; i < 3 ; i++){
                 if(prev[i].code == ev[0].code){
                     if(prev[i].value == 1 && ev[0].value == 0){
@@ -89,13 +81,13 @@ void input_process(){
             }
         }
         if(msg.msgtype == 1 && msg.data.code == POWER_OFF){
-            EXIT_HANDLING;
+            EXIT_HANDLING_INPUT;
         }
         else if(msg.msgtype != 0){
             int a = msgsnd(key_id,&msg,sizeof(msg),0);
             if(a == -1){
                 perror("error!!\n");
-                EXIT_HANDLING;
+                EXIT_HANDLING_INPUT;
             }
         }
     }
