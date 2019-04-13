@@ -70,6 +70,7 @@ void main_process(int,int);
 
 
 void mode_clock(msg_input *imsg, fpga_devices *now, msg_output *omsg);
+void mode_clock_checker(fpga_devices *now,msg_output *omsg);
 void mode_counter(msg_input *imsg, fpga_devices *now, msg_output *omsg);
 void mode_text_editor(msg_input *imsg, fpga_devices *now, msg_output *omsg);
 void mode_draw_board(msg_input *imsg, fpga_devices *now, msg_output *omsg);
@@ -147,25 +148,20 @@ void main_process(pid_t pid_input,pid_t pid_output){
                     case MODE_UP:
                         mode+=2;
                     case MODE_DOWN:
-                        mode -=1;
+                        mode +=MODE_NUM-1;
                         mode%=MODE_NUM;
                         memset(&now,0,sizeof(fpga_devices));
                         omsg.msgtype = mode+2;
-
-                        if(mode == 0){
-                            if(msgsnd(key_output_id,&omsg,sizeof(omsg),0) == -1) 
-                                EXIT_HANDLING(ERR);
-                            mode_functions[0](NULL,&now,&omsg);
-                            msgsnd(key_output_id,&omsg,sizeof(omsg),0);
-                            memset(&omsg,0,sizeof(omsg));
-                        }
+                        mode_functions[mode](NULL,&now,&omsg);
                         break;
                 }
             }
             else
                 mode_functions[mode](&imsg,&now,&omsg);
-
         }
+        else if(mode == 0)
+            mode_clock_checker(&now,&omsg);
+
 
 
         if (omsg.msgtype == 0)
@@ -184,7 +180,7 @@ void mode_clock(msg_input *imsg, fpga_devices *now, msg_output *omsg){
     t = localtime(&timer);
     hour = t->tm_hour;
     min = t -> tm_min;
-    if(now->flags == 0){//start mode 1
+    if(imsg == NULL){//start mode 1
         now->flags = 1<<7;      //led_1
         now->fnd_data[0] = hour / 10 ;
         now->fnd_data[1] = hour % 10 ;
@@ -203,21 +199,21 @@ void mode_clock(msg_input *imsg, fpga_devices *now, msg_output *omsg){
         return;
     }
     switch(i+1){
-        case 2:
-
-            now->fnd_data[0] = hour / 10;
-            now->fnd_data[1] = hour % 10;
-            now->fnd_data[2] = min  / 10;
-            now->fnd_data[3] = min  % 10;
-            now->flags = 0;
-
-            break;
         case 1:
-            if ( now-> flags & 1 << 5 != 0 ){
+            if ( now-> flags & 1 << 5){
                 now -> prev_h = hour;
                 now -> prev_m = min;
             }
             now -> flags ^= 1 << 5;
+            break;
+        case 2:
+            now->flags = 1<<7;
+            now->fnd_data[0] = hour / 10;
+            now->fnd_data[1] = hour % 10;
+            now->fnd_data[2] = min  / 10;
+            now->fnd_data[3] = min  % 10;
+            now ->prev_h =  hour;
+            now ->prev_m =  min;
             break;
         case 3:
             if(now->flags & 1<<5){
@@ -230,11 +226,6 @@ void mode_clock(msg_input *imsg, fpga_devices *now, msg_output *omsg){
             }
             break;
     }
-    if(now->flags & 1<< 5 == 0 && min != now -> prev_m){
-        now -> prev_m = min;
-        now -> prev_m = hour;
-        TIME_UP_MIN;
-    }
 end:
     omsg -> msgtype =2; 
     omsg->fnd_data[0] = now -> fnd_data[0];
@@ -244,10 +235,32 @@ end:
     omsg -> flags = now -> flags;
 
 }
+void mode_clock_checker(fpga_devices *now,msg_output *omsg){
+    int hour,min,i;
+    time_t timer;
+    struct tm *t;
+    timer = time(NULL);
+    t = localtime(&timer);
+    hour = t->tm_hour;
+    min = t -> tm_min;
+    if((now->flags & (1<< 5)) == 0 && min != now -> prev_m){
+        now -> prev_m = min;
+        now -> prev_h = hour;
+        TIME_UP_MIN;
+        omsg -> msgtype = 2;
+        omsg->fnd_data[0] = now -> fnd_data[0];
+        omsg->fnd_data[1] = now -> fnd_data[1];
+        omsg->fnd_data[2] = now -> fnd_data[2];
+        omsg->fnd_data[3] = now -> fnd_data[3];
+        omsg -> flags = now -> flags;
+    }
+
+}
 void mode_counter(msg_input *imsg, fpga_devices *now, msg_output *omsg){
     int i,prev_n,n,target,result=0;
-    if(now -> flags == 0){
+    if(imsg == NULL){//start mode 1
         now->flags = 0x80 >> 1;
+        goto end_counter;
     }
     for(i = 0 ; i < 4 ; i++)
         if(imsg->data.buf_switch[i] == 1)
@@ -275,7 +288,7 @@ void mode_counter(msg_input *imsg, fpga_devices *now, msg_output *omsg){
             CHANGE_NOTATION(n,n);
             break;
     }
-
+end_counter:
     omsg -> msgtype = 3; 
     omsg->fnd_data[0] = now -> fnd_data[0] = 0;
     omsg->fnd_data[1] = now -> fnd_data[1];
@@ -290,9 +303,10 @@ void mode_text_editor(msg_input *imsg, fpga_devices *now, msg_output *omsg){
     char *ABC = ".ADGJMPTWQBEHKNRUXZCFILOSVY";
     int i,n=0,match_idx,target_idx,result = 0;
     char target = 0;
-    if(now -> dot_matrix[0] == 0){//start_mode3
+    if(imsg == NULL){//start mode 1
         for(i = 0 ; i < 10 ; i++)
             now -> dot_matrix[i] = A_1[0][i];
+        goto end_text_edit;
     }
     for(i = 0 ; i < 9 ; i++){
         if(imsg -> data.buf_switch[i] == 1){
@@ -348,7 +362,7 @@ void mode_text_editor(msg_input *imsg, fpga_devices *now, msg_output *omsg){
     }
     now->fnd_data[3] += 1;
     CHANGE_NOTATION(1,1);
-
+end_text_edit:
     omsg -> msgtype = 4; 
     omsg->fnd_data[0] = now -> fnd_data[0];
     omsg->fnd_data[1] = now -> fnd_data[1];
@@ -364,17 +378,22 @@ void mode_text_editor(msg_input *imsg, fpga_devices *now, msg_output *omsg){
 //cursur [0] -> dot_matrix[#]
 void mode_draw_board(msg_input *imsg, fpga_devices *now, msg_output *omsg){
     int match_idx=-1,i,result;
+    if(imsg == NULL){
+        now -> flags = 1;
+        goto end_draw;
+    }
     for(i=0 ; i < 9 ; i++){
         if(imsg->data.buf_switch[i] == 1){
             match_idx = i;
             break;
         }
     }
-    if(match_idx == 0)
+    if(match_idx == 10)
         return ;
     switch(match_idx){
         case 0:
-            now ->flags = now ->cursur[0] = now ->cursur[1] = 0;
+            now ->flags = 1;
+            now ->cursur[0] = now ->cursur[1] = 0;
             memset(now->dot_matrix,0,sizeof(now->dot_matrix));
             break;
         case 1:
@@ -387,16 +406,16 @@ void mode_draw_board(msg_input *imsg, fpga_devices *now, msg_output *omsg){
             now->cursur[1] = now ->cursur[1] - 1 < 0 ? now ->cursur[1] : now->cursur[1]-1;
             break;
         case 4:
-            now->dot_matrix[now->cursur[0]] ^= 0x30 >> now->cursur[1];
+            now->dot_matrix[now->cursur[0]] ^= 0x40 >> now->cursur[1];
             break;
         case 5:
-            now->cursur[1] = now ->cursur[1] + 1 < 7 ? now ->cursur[1] : now->cursur[1]+1;
+            now->cursur[1] = now ->cursur[1] + 1 >= 7 ? now ->cursur[1] : now->cursur[1]+1;
             break;
         case 6:
             memset(now->dot_matrix,0,sizeof(now->dot_matrix));
             break;
         case 7:
-            now->cursur[0] = now ->cursur[0] + 1 < 10 ? now ->cursur[0] : now->cursur[0]+1;
+            now->cursur[0] = now ->cursur[0] + 1 >= 10 ? now ->cursur[0] : now->cursur[0]+1;
             break;
         case 8:
             for(i = 0 ; i < 10 ; i++)
@@ -405,7 +424,7 @@ void mode_draw_board(msg_input *imsg, fpga_devices *now, msg_output *omsg){
     }
     now->fnd_data[3] += 1;
     CHANGE_NOTATION(1,1);
-
+end_draw:
     omsg -> msgtype = 5; 
     omsg->fnd_data[0] = now -> fnd_data[0];
     omsg->fnd_data[1] = now -> fnd_data[1];

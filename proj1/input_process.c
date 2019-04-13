@@ -63,7 +63,7 @@ void input_process(){
 
     printf("%d\n",key_id);
     while(1){
-        usleep(40000);
+        usleep(70000);
         memset(&msg,0,sizeof(msg));
 
         if(read(dev_readkey, ev, ev_size * BUFF_SIZE) >= ev_size){
@@ -93,7 +93,7 @@ void input_process(){
         }
         else if(msg.msgtype != 0){
             int a = msgsnd(key_id,&msg,sizeof(msg),0);
-                if(a == -1){
+            if(a == -1){
                 perror("error!!\n");
                 EXIT_HANDLING;
             }
