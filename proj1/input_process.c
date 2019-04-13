@@ -63,7 +63,7 @@ void input_process(){
 
     printf("%d\n",key_id);
     while(1){
-        usleep(4000);
+        usleep(40000);
         memset(&msg,0,sizeof(msg));
 
         if(read(dev_readkey, ev, ev_size * BUFF_SIZE) >= ev_size){
@@ -84,7 +84,6 @@ void input_process(){
                     msg.msgtype = 2;
                     msg.data.buf_switch[i] = 1;
                     prev_sw_buf[i] = sw_buf[i];
-                    break;
                 }
                 prev_sw_buf[i] = sw_buf[i];
             }

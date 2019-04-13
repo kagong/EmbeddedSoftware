@@ -21,6 +21,10 @@
 
 #define INIT_DEV do{\
     memset(&devices,0,sizeof(devices));\
+    if(mode == 4){\
+        for(i = 0 ; i < 10 ; i++)\
+            devices.dot_matrix[i] = temp_matrix[i];\
+    }\
     *led_addr = 0;\
     write(dev_fnd,&devices.fnd_data,4);\
     write(dev_text,devices.text,LEN_TEXT);\
@@ -31,6 +35,7 @@ void output_process(){
     key_t key_id;
     unsigned long *fpga_addr = 0;
     unsigned char *led_addr =0;
+    unsigned char temp_matrix[10] = {0x1c,0x36,0x63,0x63,0x63,0x7f,0x7f,0x63,0x63,0x63};
 
     int i, mode = 2;
     int dev_dot,dev_text,dev_fnd,dev_led;
@@ -101,7 +106,6 @@ void output_process(){
 
             for(i = 0 ; i < 4 ; i++)
                 devices.fnd_data[i] = msg.fnd_data[i];
-
             if(mode == 2){//clock
                 devices.flash_led_34_flag = msg.flags & 1 << 5;
                 if(!devices.flash_led_34_flag){
@@ -124,6 +128,7 @@ void output_process(){
                 for(i=0;i<10;i++)
                     devices.dot_matrix[i] = msg.data.mode3.dot_matrix[i];
                 write(dev_text,msg.data.mode3.text_data,LEN_TEXT);	
+                write(dev_fnd,&devices.fnd_data,4);
                 write(dev_dot,devices.dot_matrix,sizeof(devices.dot_matrix));
             }
             else if(mode == 5){//draw
