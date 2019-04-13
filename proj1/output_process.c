@@ -133,7 +133,7 @@ void output_process(){
             }
             else if(devices.flash_cursur_flag && (timer != devices.time_stamp) ){
 
-                devices.dot_matrix[devices.cursur[0]] ^= BIT4 >> devices.cursur[1];
+                devices.dot_matrix[devices.cursur[0]] ^= BIT2 >> devices.cursur[1];
                 write(dev_dot,devices.dot_matrix,sizeof(devices.dot_matrix));
                 devices.time_stamp = timer;
             }
