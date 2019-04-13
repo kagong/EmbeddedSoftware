@@ -231,7 +231,7 @@ void mode_draw_board(msg_input *imsg, fpga_devices *now, msg_output *omsg){
             break;
         }
     }
-    if(match_idx == 10)
+    if(i == 9)
         return ;
     switch(match_idx){
         case 0:
@@ -277,7 +277,76 @@ end_draw:
     omsg ->data.mode4.cursur[0] = now ->cursur[0];
     omsg ->data.mode4.cursur[1] = now ->cursur[1];
     for(i=0;i<10;i++)
-        omsg -> data.mode3.dot_matrix[i] = now -> dot_matrix[i];
+        omsg -> data.mode4.dot_matrix[i] = now -> dot_matrix[i];
+}
+static void make_map(unsigned char map[3][3],int level){
+    int n,r,i,prev_r = -1;
+    for(i=0;i<9;i++)
+        map[i/3][i%3] = 0;
+    n = level * 3;
+    for(int i = 0 ; i < n ; i++){
+        do{
+            r = rand()%9;
+        }while(r == prev_r);
+        prev_r = r;
+        PUSH_MAP(map,r);
+    }
 }
 void mode_game(msg_input *imsg, fpga_devices *now, msg_output *omsg){
+    int i,j,match_idx,flag = 0,temp;
+    //srand(time(NULL));  
+    if(imsg == NULL){
+        //now->fnd
+        //  led set msb
+        now -> level = 1;
+        make_map(now->map,now->level);
+        goto end;
+    }
+    for(i=0 ; i < 9 ; i++){
+        if(imsg->data.buf_switch[i] == 1){
+            match_idx = i;
+            break;
+        }
+    }
+    if(i>=9)
+        return ;
+    PUSH_MAP(now->map,i);
+    for(i=0;i<9;i++){
+        if(now->map[i/3][i%3] == 0){
+            flag = 1;
+            break;
+        }
+    }
+    if(flag){
+        //led_up;
+        //buzzer;
+        make_map(now->map,++now->level);
+
+    }
+    //fnd_up
+end:
+
+    for(i=0;i<3;i++){
+        for(j=0;j<3;j++){
+            temp = now->map[i][j];
+            if(temp == 1){
+                now -> dot_matrix[i*3+0] |= 0x60 >> j*2;
+                now -> dot_matrix[i*3+1] |= 0x60 >> j*2;
+                now -> dot_matrix[i*3+2] |= 0x60 >> j*2;
+            }
+            else{
+                now -> dot_matrix[i*3+0] &= !(0x60 >> j*2);
+                now -> dot_matrix[i*3+1] &= !(0x60 >> j*2);
+                now -> dot_matrix[i*3+2] &= !(0x60 >> j*2);
+            }
+        }
+    }
+    omsg -> msgtype = 6; 
+    omsg->fnd_data[0] = now -> fnd_data[0];
+    omsg->fnd_data[1] = now -> fnd_data[1];
+    omsg->fnd_data[2] = now -> fnd_data[2];
+    omsg->fnd_data[3] = now -> fnd_data[3];
+    for(i=0;i<10;i++)
+        omsg -> data.mode5.dot_matrix[i] = now -> dot_matrix[i];
+
 }

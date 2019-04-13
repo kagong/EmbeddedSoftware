@@ -75,7 +75,6 @@ void input_process(){
                 if(prev_sw_buf[i] == 1 && sw_buf[i] == 0){
                     msg.msgtype = 2;
                     msg.data.buf_switch[i] = 1;
-                    prev_sw_buf[i] = sw_buf[i];
                 }
                 prev_sw_buf[i] = sw_buf[i];
             }

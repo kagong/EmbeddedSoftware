@@ -98,5 +98,19 @@ void set_value();
     write(dev_text,devices.text,LEN_TEXT);\
     write(dev_dot,devices.dot_matrix,sizeof(devices.dot_matrix));\
 }while(0)
+#define PUSH_MAP(game_map,r)do{\
+    unsigned char x,y;\
+    y = r%3;\
+    x = r/3;\
+    game_map[x][y] ^= 1;\
+    if(x > 0)\
+    game_map[x-1][y] ^= 1;\
+    if(x < 2)\
+    game_map[x+1][y] ^= 1;\
+    if(y > 0)\
+    game_map[x][y-1] ^= 1;\
+    if(y < 2)\
+    game_map[x][y+1] ^= 1;\
+}while(0)
 
 #endif

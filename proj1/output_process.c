@@ -114,6 +114,10 @@ void output_process(){
                 write(dev_dot,devices.dot_matrix,sizeof(devices.dot_matrix));
             }
             else if(mode == 6){
+                
+                for(i=0;i<10;i++)
+                    devices.dot_matrix[i] = msg.data.mode4.dot_matrix[i];
+                write(dev_dot,devices.dot_matrix,sizeof(devices.dot_matrix));
             }
 
 

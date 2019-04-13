@@ -12,6 +12,8 @@ typedef struct _fpga_devices{
     unsigned char dot_matrix[10];
     unsigned char cursur[2];
     int prev_h,prev_m;
+    unsigned char map[3][3];
+    int level;
 }fpga_devices;
 
 typedef struct _msg_input{
@@ -43,6 +45,9 @@ typedef struct _msg_output{
             unsigned char dot_matrix[10];
             unsigned char cursur[2];
         }mode4;
+        struct _mode5{
+            unsigned char dot_matrix[10];
+        }mode5;
 
     }data;
 }msg_output;
