@@ -24,7 +24,7 @@ void mode_clock(msg_input *imsg, fpga_devices *now, msg_output *omsg){
     hour = t->tm_hour;
     min = t -> tm_min;
     if(imsg == NULL){//start mode 1
-        now->flags = 1<<7;      //led_1
+        now->flags = BIT1;      //led_1
         now->fnd_data[0] = hour / 10 ;
         now->fnd_data[1] = hour % 10 ;
         now->fnd_data[2] = min  / 10 ;
@@ -43,14 +43,14 @@ void mode_clock(msg_input *imsg, fpga_devices *now, msg_output *omsg){
     }
     switch(i+1){
         case 1:
-            if ( now-> flags & 1 << 5){
+            if ( now-> flags & BIT3){
                 now -> prev_h = hour;
                 now -> prev_m = min;
             }
-            now -> flags ^= 1 << 5;
+            now -> flags ^= BIT3;
             break;
         case 2:
-            now->flags = 1<<7;
+            now->flags = BIT1;
             now->fnd_data[0] = hour / 10;
             now->fnd_data[1] = hour % 10;
             now->fnd_data[2] = min  / 10;
@@ -59,12 +59,12 @@ void mode_clock(msg_input *imsg, fpga_devices *now, msg_output *omsg){
             now ->prev_m =  min;
             break;
         case 3:
-            if(now->flags & 1<<5){
+            if(now->flags & BIT3){
                 TIME_UP_HOUR;
             }
             break;
         case 4:
-            if(now->flags & 1<< 5){
+            if(now->flags & BIT3){
                 TIME_UP_MIN;
             }
             break;
@@ -86,7 +86,7 @@ void mode_clock_checker(fpga_devices *now,msg_output *omsg){
     t = localtime(&timer);
     hour = t->tm_hour;
     min = t -> tm_min;
-    if((now->flags & (1<< 5)) == 0 && min != now -> prev_m){
+    if((now->flags & BIT3) == 0 && min != now -> prev_m){
         now -> prev_m = min;
         now -> prev_h = hour;
         TIME_UP_MIN;
@@ -102,7 +102,7 @@ void mode_clock_checker(fpga_devices *now,msg_output *omsg){
 void mode_counter(msg_input *imsg, fpga_devices *now, msg_output *omsg){
     int i,prev_n,n,target,result=0;
     if(imsg == NULL){//start mode 1
-        now->flags = 0x80 >> 1;
+        now->flags = BIT2;
         goto end_counter;
     }
     for(i = 0 ; i < 4 ; i++)
@@ -117,8 +117,8 @@ void mode_counter(msg_input *imsg, fpga_devices *now, msg_output *omsg){
             prev_n = FLAG_TO_NOTATION;
 
             now->flags >>= 1;
-            if(now -> flags < 1 << 4)
-                now -> flags = 1<< 7;
+            if(now -> flags < BIT4)
+                now -> flags = BIT1;
 
             n = FLAG_TO_NOTATION;
             CHANGE_NOTATION(prev_n,n);
@@ -249,7 +249,7 @@ void mode_draw_board(msg_input *imsg, fpga_devices *now, msg_output *omsg){
             now->cursur[1] = now ->cursur[1] - 1 < 0 ? now ->cursur[1] : now->cursur[1]-1;
             break;
         case 4:
-            now->dot_matrix[now->cursur[0]] ^= 0x40 >> now->cursur[1];
+            now->dot_matrix[now->cursur[0]] ^= BIT2 >> now->cursur[1];
             break;
         case 5:
             now->cursur[1] = now ->cursur[1] + 1 >= 7 ? now ->cursur[1] : now->cursur[1]+1;
