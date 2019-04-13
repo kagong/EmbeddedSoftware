@@ -12,6 +12,7 @@
 #include<time.h>
 #include "global.h"
 #include "macros.h"
+
 void output_process(){
     msg_output msg;
     key_t key_id;
@@ -39,14 +40,11 @@ void output_process(){
     dev_dot  = open(FPGA_DOT_DEVICE, O_WRONLY);
     dev_text = open(FPGA_TEXT_LCD_DEVICE, O_WRONLY);
     dev_fnd  = open(FPGA_FND_DEVICE, O_WRONLY);
-    dev_led = open( FPGA_LED_DEVICE, O_RDWR | O_SYNC); //memory device open
+    dev_led = open( FPGA_LED_DEVICE, O_RDWR | O_SYNC); 
 
-    if(dev_dot < 0 || dev_text < 0 || dev_fnd < 0){
-        printf("error!\n");
-        close(dev_dot);
-        close(dev_text);
-        close(dev_fnd);
-        exit(0);
+    if(dev_dot || dev_text || dev_fnd || dev_led){
+        printf("error\n");
+        EXIT_HANDLING_OUTPUT;
     }
 
     fpga_addr = (unsigned long *)mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_SHARED,
@@ -54,18 +52,14 @@ void output_process(){
     led_addr=(unsigned char*)((void*)fpga_addr+LED_ADDR);
     if (fpga_addr == MAP_FAILED) {
         printf("error\n");
-        exit(0);
+        EXIT_HANDLING_OUTPUT;
     }
     INIT_DEV;
     mode = 2;
     key_id = msgget((key_t)5975,IPC_CREAT|0666);
     if(key_id == -1){
-        perror("error!!\n");
         munmap(led_addr, 4096); 
-        close(dev_dot);
-        close(dev_text);
-        close(dev_fnd);
-        exit(0);
+        EXIT_HANDLING_OUTPUT;
     }
     int temp;
     while(1){
@@ -73,10 +67,9 @@ void output_process(){
         temp = msgrcv( key_id, &msg, sizeof(msg), 0,IPC_NOWAIT) ;
         if(temp != -1){
             if(msg.msgtype == 1){
-                close(dev_dot);
-                close(dev_text);
-                close(dev_fnd);
-                exit(1);
+                printf("error\n");
+                munmap(led_addr, 4096); 
+                EXIT_HANDLING_OUTPUT;
             }
             if(mode != msg.msgtype){
                 mode = msg.msgtype;
@@ -120,6 +113,8 @@ void output_process(){
                 write(dev_fnd,&devices.fnd_data,4);
                 write(dev_dot,devices.dot_matrix,sizeof(devices.dot_matrix));
             }
+            else if(mode == 6){
+            }
 
 
         }
@@ -139,9 +134,7 @@ void output_process(){
             }
         }
     }
-    close(dev_dot);
-    close(dev_text);
-    close(dev_fnd);
-    exit(1);
+    munmap(led_addr, 4096); 
+    EXIT_HANDLING_OUTPUT;
 }
 

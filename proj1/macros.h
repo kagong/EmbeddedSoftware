@@ -40,7 +40,13 @@ void set_value();
     msgsnd(key_id,&msg_error,sizeof(msg_input)-sizeof(long),0);\
     exit(0);\
 }while(0)
-
+#define EXIT_HANDLING_OUTPUT do{\
+    close(dev_dot);\
+    close(dev_text);\
+    close(dev_fnd);\
+    close(dev_led);\
+    exit(0);\
+}while(0)
 #define EXIT_HANDLING(flag) do{\
     if(flag == false)\
     perror("error!!\n");\

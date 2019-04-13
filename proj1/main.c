@@ -65,7 +65,7 @@ void main_process(pid_t pid_input,pid_t pid_output){
     mode_functions[1] = mode_counter;
     mode_functions[2] = mode_text_editor;
     mode_functions[3] = mode_draw_board;
-    mode_functions[4] = mode_foo;
+    mode_functions[4] = mode_game;
 
     set_value();
 
@@ -93,8 +93,8 @@ void main_process(pid_t pid_input,pid_t pid_output){
                     case MODE_UP:
                         mode+=2;
                     case MODE_DOWN:
-                        mode +=MODE_NUM-1;
-                        mode%=MODE_NUM;
+                        mode += MODE_NUM-1;
+                        mode %= MODE_NUM;
                         memset(&now,0,sizeof(fpga_devices));
                         omsg.msgtype = mode+2;
                         mode_functions[mode](NULL,&now,&omsg);

@@ -279,5 +279,5 @@ end_draw:
     for(i=0;i<10;i++)
         omsg -> data.mode3.dot_matrix[i] = now -> dot_matrix[i];
 }
-void mode_foo(msg_input *imsg, fpga_devices *now, msg_output *omsg){
+void mode_game(msg_input *imsg, fpga_devices *now, msg_output *omsg){
 }
