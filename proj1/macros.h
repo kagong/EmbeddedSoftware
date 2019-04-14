@@ -1,6 +1,10 @@
 #ifndef _MACROS_H
 #define _MACROS_H
 
+/*
+ * NAME:_exp , max_notation
+ * these will be used by macros related to the notation
+ */
 extern int _exp[4][4];
 extern int max_notation[4];
 
@@ -34,7 +38,16 @@ void set_value();
 #define BIT7                0x02
 #define BIT8                0x01
 
-//--------------------------macro function
+//--------------------------macro functions
+/* NAME : exit_handlings
+ * this macros work sensitive things at the end 
+ * In following actions, it take right actions
+ * 1. close file descriptor
+ * 2. push the exit msg to child process or parent process
+ * 3. wait child process
+ * 4. err msg print
+ * 5. exit process myself
+ */
 #define EXIT_HANDLING_INPUT do{\
     close(dev_switch);\
     close(dev_readkey);\
@@ -57,6 +70,10 @@ void set_value();
     exit(0);\
 }while(0)
 
+/* NAME : TIME HANDLING MACROS
+ * following macros work for time data in fpga_fnd
+ * It fix the datas of fpga_fnd to right datas(Time observe 24:00)
+ */
 #define TIME_UP(n,m) do{\
     now -> fnd_data[m] += 1;\
     if(now -> fnd_data[m] > 9){\
@@ -79,7 +96,18 @@ void set_value();
     }\
 }while(0)
 
+/* NAME : FlAG_TO_NOTATION
+ * this function change flags to notation number 
+ * 0 -> binary
+ * 1 -> decimal
+ * 2 -> octal
+ * 3 -> quad
+ */
 #define FLAG_TO_NOTATION  ((now -> flags & 0x40) != 0) * 1 + ((now -> flags &0x20) != 0) * 2 + ((now ->flags &0x10)!=0) * 3 
+/*
+ * NAME: CHANGE_NOTATION
+ * this function fix the fnd data to right notation data
+ */
 #define CHANGE_NOTATION(from,to) do{\
     for(i=0;i<4;i++)\
     result += now -> fnd_data[i]*_exp[from][i];\
@@ -92,13 +120,20 @@ void set_value();
 }while(0)
 
 
+/* NAME : INIT_DEV
+ * In output_process, they want to init their devices, the data shown 
+ * so, init and print 0
+ */
 #define INIT_DEV do{\
     memset(&devices,0,sizeof(devices));\
     *led_addr = 0;\
-    write(dev_fnd,&devices.fnd_data,4);\
-    write(dev_text,devices.text,LEN_TEXT);\
     write(dev_dot,devices.dot_matrix,sizeof(devices.dot_matrix));\
 }while(0)
+
+/* NAME : PUSH_MAP
+ * In mode_game function , 
+ * push the data in the correct coordinates 
+ */
 #define PUSH_MAP(game_map,r)do{\
     unsigned char x,y;\
     y = r%3;\

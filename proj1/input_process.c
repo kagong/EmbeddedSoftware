@@ -16,6 +16,13 @@
 #include "macros.h"
 
 
+/* NAME : input_process
+ * this functions read datas from either readkey or switch
+ * And when it data change 1 to 0 , we assume that the key is entered
+ * then we sent msg to main_process
+ * if we send readkey's data then msgtype = 1
+ * if we send switch's data then msgtype = 2
+ */
 
 void input_process(){
     struct input_event ev[EV_BUFF_SIZE],prev[3];
@@ -24,6 +31,8 @@ void input_process(){
     key_t key_id;
     unsigned char sw_buf[MAX_BUTTON],prev_sw_buf[MAX_BUTTON];
 
+    printf("input_process start!\n");
+    //init processs
     memset(&msg_error,0,sizeof(msg_error));
     memset(&prev,0,3*sizeof(struct input_event));
     memset(&prev_sw_buf,0,MAX_BUTTON*sizeof(unsigned char));
@@ -53,11 +62,12 @@ void input_process(){
 
     sw_buf_size=sizeof(sw_buf);
 
-    printf("%d\n",key_id);
+    //input_logic
     while(1){
         usleep(70000);
         memset(&msg,0,sizeof(msg));
 
+        //read readkeys's input
         if(read(dev_readkey, ev, ev_size * EV_BUFF_SIZE) >= ev_size){
             for(i = 0 ; i < 3 ; i++){
                 if(prev[i].code == ev[0].code){
@@ -69,7 +79,8 @@ void input_process(){
                 }
             }
         }
-        else{
+        else{//case that there is not any input by readkey
+            //read switch's input 
             read(dev_switch,&sw_buf,sw_buf_size);
             for (i=0;i<MAX_BUTTON;i++){
                 if(prev_sw_buf[i] == 1 && sw_buf[i] == 0){

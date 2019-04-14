@@ -24,9 +24,10 @@ typedef struct _fpga_devices{
 }fpga_devices;
 
 /*NAME: msg_input
- *
- *
- *
+ * In input_process.c
+ * this structure is sent to main logic
+ * if msgtype is 1 then this msg is type with readkey's input
+ * if msgtype is 2 then this msg is type with switch's input
  */
 typedef struct _msg_input{
     long msgtype;
@@ -36,14 +37,12 @@ typedef struct _msg_input{
     }data;
 }msg_input;
 
-//msg type == 1 -> exit
-//msg type == mode 2, 3, 4, 5, 6
-
-//mode 1: flags 00000011 
-//mode 2: flags 00001111
-//mode 3: flags 00000000 
-//mode 4: flags 00000001
-
+/* NAME: msg_output
+ * this structure has data ASAP write to real device
+ * msgtype respresent the mode number (msgtype -1 == mode#)
+ * if msgtype is 1 then that means exit process
+ * flags keep led_data, flash flag, and so....
+ */
 typedef struct _msg_output{
     long msgtype;
     unsigned char fnd_data[4];

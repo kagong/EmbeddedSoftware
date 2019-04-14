@@ -1,6 +1,10 @@
 #include "macros.h"
 int _exp[4][4];
 int max_notation[4];
+/* NAME: SET_VALUE
+ * it set the data
+ * it will be called by the main()
+ */
 void set_value(){
     _exp[0][0] = 1 << 3;
     _exp[0][1] = 1 << 2;
