@@ -4,6 +4,13 @@
 #include<time.h>
 #include<sys/types.h>
 #include"macros.h"
+
+/* NAME: fpga_devices
+ * In main.c and mode_functions.c
+ * This structure is stored now status of devices
+ * and this will copy to output msg and send to output_process()
+ */
+ 
 typedef struct _fpga_devices{
     unsigned char fnd_data[4];
     unsigned char flags; 
@@ -16,6 +23,11 @@ typedef struct _fpga_devices{
     int level;
 }fpga_devices;
 
+/*NAME: msg_input
+ *
+ *
+ *
+ */
 typedef struct _msg_input{
     long msgtype;
     union{

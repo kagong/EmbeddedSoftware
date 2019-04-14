@@ -284,7 +284,7 @@ static void make_map(unsigned char map[3][3],int level){
     for(i=0;i<9;i++)
         map[i/3][i%3] = 0;
     n = level * 3;
-    for(int i = 0 ; i < n ; i++){
+    for( i = 0 ; i < n ; i++){
         do{
             r = rand()%9;
         }while(r == prev_r);
