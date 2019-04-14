@@ -20,7 +20,7 @@ void output_process(){
     unsigned char *led_addr =0;
 
     int i, mode,prev_flash_flag;
-    int dev_dot,dev_text,dev_fnd,dev_led;
+    int dev_dot,dev_text,dev_fnd,dev_led,dev_buzzer;
 
     struct _devices{
         unsigned char flash_led_34_flag;
@@ -41,9 +41,10 @@ void output_process(){
     dev_text = open(FPGA_TEXT_LCD_DEVICE, O_WRONLY);
     dev_fnd  = open(FPGA_FND_DEVICE, O_WRONLY);
     dev_led = open( FPGA_LED_DEVICE, O_RDWR | O_SYNC); 
+	dev_buzzer = open(FPGA_BUZZER_DEVICE, O_RDWR);
 
-    if(dev_dot || dev_text || dev_fnd || dev_led){
-        printf("error\n");
+    if(dev_dot < 0  || dev_text < 0 || dev_fnd < 0|| dev_led < 0 ||dev_buzzer < 0){
+        printf("OUTPUT- device open error\n");
         EXIT_HANDLING_OUTPUT;
     }
 
@@ -67,7 +68,6 @@ void output_process(){
         temp = msgrcv( key_id, &msg, sizeof(msg), 0,IPC_NOWAIT) ;
         if(temp != -1){
             if(msg.msgtype == 1){
-                printf("error\n");
                 munmap(led_addr, 4096); 
                 EXIT_HANDLING_OUTPUT;
             }
@@ -115,8 +115,12 @@ void output_process(){
             }
             else if(mode == 6){
                 
+			    write(dev_buzzer,&msg.data.mode5.buzzer,1);
+                devices.led_data = msg.flags;
+                *led_addr = devices.led_data;
                 for(i=0;i<10;i++)
-                    devices.dot_matrix[i] = msg.data.mode4.dot_matrix[i];
+                    devices.dot_matrix[i] = msg.data.mode5.dot_matrix[i];
+                write(dev_fnd,&devices.fnd_data,4);
                 write(dev_dot,devices.dot_matrix,sizeof(devices.dot_matrix));
             }
 

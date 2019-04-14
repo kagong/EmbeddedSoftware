@@ -13,6 +13,7 @@ void set_value();
 #define FPGA_TEXT_LCD_DEVICE "/dev/fpga_text_lcd"
 #define FPGA_FND_DEVICE "/dev/fpga_fnd"
 #define FPGA_LED_DEVICE "/dev/mem"
+#define FPGA_BUZZER_DEVICE "/dev/fpga_buzzer"
 
 #define FPGA_BASE_ADDRESS   0x08000000
 #define LED_ADDR            0x16				

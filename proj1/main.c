@@ -16,7 +16,7 @@
 
 #define ERR false
 #define NOMAL true
-#define MODE_NUM 4
+#define MODE_NUM 5
 void main_process(int,int);
 
 
@@ -68,6 +68,7 @@ void main_process(pid_t pid_input,pid_t pid_output){
     mode_functions[4] = mode_game;
 
     set_value();
+    srand(time(NULL));  
 
     key_input_id = msgget((key_t)875,IPC_CREAT|0666);
     key_output_id = msgget((key_t)5975,IPC_CREAT|0666);

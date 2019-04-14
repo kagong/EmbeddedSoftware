@@ -293,18 +293,15 @@ static void make_map(unsigned char map[3][3],int level){
     }
 }
 void mode_game(msg_input *imsg, fpga_devices *now, msg_output *omsg){
-    int i,j,match_idx,flag = 0,temp;
-    //srand(time(NULL));  
+    int i,j,temp,result=0;
     if(imsg == NULL){
-        //now->fnd
-        //  led set msb
-        now -> level = 1;
-        make_map(now->map,now->level);
+        now -> flags = 1;
+        make_map(now->map,now->flags);
         goto end;
     }
+    now -> buzzer = 0;
     for(i=0 ; i < 9 ; i++){
         if(imsg->data.buf_switch[i] == 1){
-            match_idx = i;
             break;
         }
     }
@@ -313,19 +310,18 @@ void mode_game(msg_input *imsg, fpga_devices *now, msg_output *omsg){
     PUSH_MAP(now->map,i);
     for(i=0;i<9;i++){
         if(now->map[i/3][i%3] == 0){
-            flag = 1;
             break;
         }
     }
-    if(flag){
-        //led_up;
-        //buzzer;
-        make_map(now->map,++now->level);
-
+    if(i == 9){
+        now -> buzzer = 1;
+        if(now->flags == 0xff)
+            now->flags = 0;
+        make_map(now->map,++now->flags);
     }
-    //fnd_up
+    now->fnd_data[3] += 1;
+    CHANGE_NOTATION(1,1);
 end:
-
     for(i=0;i<3;i++){
         for(j=0;j<3;j++){
             temp = now->map[i][j];
@@ -335,18 +331,20 @@ end:
                 now -> dot_matrix[i*3+2] |= 0x60 >> j*2;
             }
             else{
-                now -> dot_matrix[i*3+0] &= !(0x60 >> j*2);
-                now -> dot_matrix[i*3+1] &= !(0x60 >> j*2);
-                now -> dot_matrix[i*3+2] &= !(0x60 >> j*2);
+                now -> dot_matrix[i*3+0] &= ~(0x60 >> j*2);
+                now -> dot_matrix[i*3+1] &= ~(0x60 >> j*2);
+                now -> dot_matrix[i*3+2] &= ~(0x60 >> j*2);
             }
         }
     }
     omsg -> msgtype = 6; 
+    omsg->flags = now -> flags;
     omsg->fnd_data[0] = now -> fnd_data[0];
     omsg->fnd_data[1] = now -> fnd_data[1];
     omsg->fnd_data[2] = now -> fnd_data[2];
     omsg->fnd_data[3] = now -> fnd_data[3];
     for(i=0;i<10;i++)
         omsg -> data.mode5.dot_matrix[i] = now -> dot_matrix[i];
+    omsg ->data.mode5.buzzer = now -> buzzer;
 
 }
