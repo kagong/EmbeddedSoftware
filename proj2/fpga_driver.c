@@ -18,6 +18,8 @@ AUTH : largest@huins.com */
 #include <linux/init.h>
 #include <linux/version.h>
 
+#define STUDENT_NAME "YUNJEHYEONG\0"
+#define STUDENT_ID "20151575\0"
 
 #define IOM_MAJOR 242		// ioboard fpga device major number
 #define IOM_NAME "dev_driver""		// ioboard fpga device name
@@ -25,14 +27,25 @@ AUTH : largest@huins.com */
 #define IOM_FND_ADDRESS 0x08000004 // pysical address
 #define IOM_FPGA_DOT_ADDRESS 0x08000210 // pysical address
 #define IOM_LED_ADDRESS 0x08000016 // pysical address
-#define IOM_FPGA_TEXT_LCD_ADDRESS 0x08000090 // pysical address - 32 Byte (16 * 2)
+#define IOM_FPGA_TEXT_LCD_ADDRESS 0x08000090 // pysical address - 32 Byte (16 * 2
+#define FND(data) data[0] << 12 | data[1] << 8 | data[2] << 4 | data[0];
 //Global variable
 static int fpga_port_usage = 0;
+
 static unsigned char *iom_fpga_fnd_addr;
 static unsigned char *iom_fpga_text_lcd_addr;
 static unsigned char *iom_fpga_dot_addr;
 static unsigned char *iom_fpga_led_addr;
 
+static struct _device_timer{
+    struct itmer_list timer;
+    unsigned int count;
+    unsigned char idx;
+    unsigned char first_dir,second_dir;
+    unsigned char first_text_idx,second_idx;
+};
+struct _device_timer device_timer;
+static unsigned char fnd_data[4];
 // define functions...
 ssize_t iom_fpga_fnd_write(struct file *inode, const char *gdata, size_t length, loff_t *off_what);
 ssize_t iom_fpga_fnd_read(struct file *inode, char *gdata, size_t length, loff_t *off_what);
@@ -104,9 +117,47 @@ ssize_t iom_fpga_fnd_read(struct file *inode, char *gdata, size_t length, loff_t
 
 	return length;
 }
-int device_ioctl(struct file *inode, struct file *file, unsigned int ioctl_num, unsigned long ioctl_param){
-    unsigned int interval,num,start;
+static void timer_foo(unsigned long timeout){
+
 }
+int device_ioctl(struct file *inode, struct file *file, unsigned int ioctl_num, unsigned long ioctl_param){
+    unsigned int interval,start_val,start_idx, count;
+    char *name = STUDENT_NAME, *id= STUDENT_ID;
+    //fnd
+    fnd_data[start_idx] = start_val;
+    outw((unsigned short int)(FND(fnd_data)),(unsigned int)iom_fpga_fnd_addr);
+    //dot
+    for(int i = 0 ; i < 10; i++)
+        outw((unsigned short int)dot_data[start_idx][i],(unsigned int)iom_fpga_dot_addr + i*2);
+
+    //led
+    outw((unsigned short)(1 << (start_val-1)),(unsigned int)iom_fpga_led_addr);
+
+    //lcd text
+    for(int i = 0 ; i < strlen(name); i++){
+        unsigned short int temp = ((name[i] & 0xFF) << 8 | name[i+1] & 0xFF);
+        outw(temp,(unsigned int)iom_fpga_text_lcd_addr+i);
+    }
+    for(int i = 0 ; i < strlen(id); i++){
+        unsigned short int temp = ((id[i] & 0xFF) << 8 | id[i+1] & 0xFF);
+        outw(temp,(unsigned int)iom_fpga_text_lcd_addr+16+i);
+    }
+    device_timer.idx = start_idx;
+    device_timer.count = count;
+    device_timer.first_text_idx = device_timer.second_text_idx = 0;
+
+    del_timer_sync(&device_timer.timer);
+
+    device_timer.timer.expires = jiffies + ((interval/10)*HZ);
+    device_timer.timer.data = (unsigned long)&device_timer;
+    device_timer.timer.function = timer_foo;
+
+    add_timer(&device_timer.timer);
+    return 1;
+
+}
+
+
 int __init iom_fpga_init(void)
 {
 	int result;
