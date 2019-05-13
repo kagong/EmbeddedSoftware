@@ -11,7 +11,7 @@ int main(int argc,char** argv){
     int dev;
     interval = atoi(argv[1]);
     count = atoi(argv[2]);
-    val = atoi(argv[3]):
+    val = atoi(argv[3]);
     unsigned int data = syscall(376,interval,count,val);
     dev = open("/dev/dev_driver",O_WRONLY);
     if(dev <0 ){

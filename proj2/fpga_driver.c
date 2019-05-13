@@ -37,27 +37,26 @@ static unsigned char *iom_fpga_text_lcd_addr;
 static unsigned char *iom_fpga_dot_addr;
 static unsigned char *iom_fpga_led_addr;
 
-static struct _device_timer{
-    struct itmer_list timer;
+typedef struct _device_timer{
+    struct timer_list timer;
     unsigned int count,interval,start_val,idx;
-    unsigned char first_dir,second_dir;
-    unsigned char first_text_idx,second_idx;
-    short first_text_dir,second_dir;
-};
-struct _device_timer device_timer;
+    unsigned char first_text_idx,second_text_idx;
+    short first_text_dir,second_text_dir;
+}_device_timer;
+_device_timer device_timer;
 
 static unsigned char fnd_data[4];
 // define functions...
 int iom_fpga_open(struct inode *minode, struct file *mfile);
 int iom_fpga_release(struct inode *minode, struct file *mfile);
-int device_ioctl(struct file *inode, struct file *file, unsigned int ioctl_num, unsigned long ioctl_param);
+long device_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param);
 // define file_operations structure 
 struct file_operations iom_fpga_fops =
 {
-	.owner		=	THIS_MODULE,
-	.open		=	iom_fpga_open,
-    .ioctl      =   device_ioctl,
-	.release	=	iom_fpga_release,
+    .owner=	THIS_MODULE,
+    .unlocked_ioctl = device_ioctl,
+	.open=	iom_fpga_open,
+	.release=	iom_fpga_release
 };
 
 // when fnd device open ,call this function
@@ -82,37 +81,41 @@ int iom_fpga_release(struct inode *minode, struct file *mfile)
 static void timer_func(unsigned long timeout){
     unsigned int val;
     char *name = STUDENT_NAME, *id= STUDENT_ID;
-    struct _device_timer *temp = (struct _device_timer *)timeout;
-    if(temp.count == 0)){
+    int i;
+    struct _device_timer *temp = (_device_timer *)timeout;
+    short new_idx;
+    if(temp->count == 0){
         INIT;
         return ;
     }
    
-    fnd_data[temp.idx]++; 
-    fnd_data[temp.idx] %= 9;
-    if(fnd_data[temp.idx] == temp.start_val){
-        fnd_data[temp.idx++] = 0;
-        temp.idx %= 4;
-        fnd_data[temp.idx] = temp.start_val;
+    fnd_data[temp->idx]++; 
+    fnd_data[temp->idx] %= 9;
+    if(fnd_data[temp->idx] == temp->start_val){
+        fnd_data[temp->idx++] = 0;
+        temp->idx %= 4;
+        fnd_data[temp->idx] = temp->start_val;
     }
-    val = fnd_data[temp.idx];
+    val = fnd_data[temp->idx];
 
-    write_to_device(val);
+    write_to_device(val,temp->first_text_idx,temp->first_text_dir,temp->second_text_idx,temp->second_text_dir);
 
-    temp.count = count-1;
-    temp.timer.expires = jiffies + ((temp.interval/10)*HZ);
-    temp.timer.data = (unsigned long)temp;
-    temp.timer.function = timer_func;
+    temp->count -= 1;
+    temp->timer.expires = jiffies + ((temp->interval/10)*HZ);
+    temp->timer.data = (unsigned long)temp;
+    temp->timer.function = timer_func;
 
-    add_timer(&device_timer.timer);
+    add_timer(&temp->timer);
 }
-int device_ioctl(struct file *inode, struct file *file, unsigned int ioctl_num, unsigned long ioctl_param){
+long device_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param){
     unsigned int interval,start_val,start_idx, count;
     char *name = STUDENT_NAME, *id= STUDENT_ID;
     unsigned int data;
+    int i;
+    short new_idx;
 
     INIT;
-    get_user(&data,(unsigned int *)ioctl_param);
+    get_user(data,(unsigned int *)ioctl_param);
     start_idx = (data >> (8*3)) & 0xFF;
     start_val = (data >> (8*2)) & 0xFF;
     count = (data >> (8*1)) & 0xFF;
@@ -123,11 +126,11 @@ int device_ioctl(struct file *inode, struct file *file, unsigned int ioctl_num, 
     device_timer.idx = start_idx;
     device_timer.count = count-1;
     device_timer.start_val = start_val;
-    device_timer.interval = interval;.
-    device_timer.first_text_idx = device_timer.second_text_idx = 0;
+    device_timer.interval = interval;
+    device_timer.first_text_idx = device_timer.second_text_idx = -1;
     device_timer.first_text_dir = device_timer.second_text_dir = 1;
 
-    write_to_device(start_val);
+    write_to_device(start_val,device_timer.first_text_idx,device_timer.first_text_dir,device_timer.second_text_idx,device_timer.second_text_dir);
 
     del_timer_sync(&device_timer.timer);
 
