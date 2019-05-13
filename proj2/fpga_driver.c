@@ -40,7 +40,7 @@ static unsigned char *iom_fpga_led_addr;
 typedef struct _device_timer{
     struct timer_list timer;
     unsigned int count,interval,start_val,idx;
-    unsigned char first_text_idx,second_text_idx;
+    short first_text_idx,second_text_idx;
     short first_text_dir,second_text_dir;
 }_device_timer;
 _device_timer device_timer;
@@ -61,7 +61,7 @@ struct file_operations iom_fpga_fops =
 
 // when fnd device open ,call this function
 int iom_fpga_open(struct inode *minode, struct file *mfile) 
-{	
+{
 	if(fpga_port_usage != 0) return -EBUSY;
 
 	fpga_port_usage = 1;
@@ -81,16 +81,17 @@ int iom_fpga_release(struct inode *minode, struct file *mfile)
 static void timer_func(unsigned long timeout){
     unsigned int val;
     char *name = STUDENT_NAME, *id= STUDENT_ID;
+    char text[2][16];
     int i;
     struct _device_timer *temp = (_device_timer *)timeout;
     short new_idx;
     if(temp->count == 0){
-        INIT;
+        INIT(fnd_data);
         return ;
     }
    
     fnd_data[temp->idx]++; 
-    fnd_data[temp->idx] %= 9;
+    fnd_data[temp->idx] = (fnd_data[temp->idx]-1)%8 + 1;
     if(fnd_data[temp->idx] == temp->start_val){
         fnd_data[temp->idx++] = 0;
         temp->idx %= 4;
@@ -101,7 +102,7 @@ static void timer_func(unsigned long timeout){
     write_to_device(val,temp->first_text_idx,temp->first_text_dir,temp->second_text_idx,temp->second_text_dir);
 
     temp->count -= 1;
-    temp->timer.expires = jiffies + ((temp->interval/10)*HZ);
+    temp->timer.expires = get_jiffies_64() + (temp->interval*HZ/10);
     temp->timer.data = (unsigned long)temp;
     temp->timer.function = timer_func;
 
@@ -111,16 +112,16 @@ long device_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl
     unsigned int interval,start_val,start_idx, count;
     char *name = STUDENT_NAME, *id= STUDENT_ID;
     unsigned int data;
+    char text[2][16];
     int i;
     short new_idx;
 
-    INIT;
+    INIT(fnd_data);
     get_user(data,(unsigned int *)ioctl_param);
     start_idx = (data >> (8*3)) & 0xFF;
     start_val = (data >> (8*2)) & 0xFF;
     count = (data >> (8*1)) & 0xFF;
     interval = (data >> (8*0)) & 0xFF;
-
     fnd_data[start_idx] = start_val;
 
     device_timer.idx = start_idx;
@@ -131,13 +132,10 @@ long device_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl
     device_timer.first_text_dir = device_timer.second_text_dir = 1;
 
     write_to_device(start_val,device_timer.first_text_idx,device_timer.first_text_dir,device_timer.second_text_idx,device_timer.second_text_dir);
-
     del_timer_sync(&device_timer.timer);
-
-    device_timer.timer.expires = jiffies + ((interval/10)*HZ);
+    device_timer.timer.expires = jiffies + (interval*HZ/10);
     device_timer.timer.data = (unsigned long)&device_timer;
     device_timer.timer.function = timer_func;
-
     add_timer(&device_timer.timer);
     return 1;
 
@@ -158,7 +156,7 @@ int __init iom_fpga_init(void)
 	iom_fpga_text_lcd_addr = ioremap(IOM_FPGA_TEXT_LCD_ADDRESS, 0x32);
 	iom_fpga_dot_addr = ioremap(IOM_FPGA_DOT_ADDRESS, 0x10);
 	iom_fpga_led_addr = ioremap(IOM_LED_ADDRESS, 0x1);
-
+    init_timer(&(device_timer.timer));
 	printk("init module, %s major number : %d\n", IOM_NAME, IOM_MAJOR);
 
 	return 0;
@@ -170,6 +168,7 @@ void __exit iom_fpga_exit(void)
 	iounmap(iom_fpga_text_lcd_addr);
 	iounmap(iom_fpga_dot_addr);
 	iounmap(iom_fpga_led_addr);
+    del_timer_sync(&device_timer.timer);
 	unregister_chrdev(IOM_MAJOR, IOM_NAME);
 }
 

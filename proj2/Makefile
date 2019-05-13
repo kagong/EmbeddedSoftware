@@ -12,7 +12,7 @@ all: driver app
 driver:
 	$(MAKE) -C $(KDIR) SUBDIRS=$(PWD) modules ARCH=arm
 
-app:
+app: app.c
 	arm-none-linux-gnueabi-gcc -static -o $(APP) $(APP).c
 
 install:

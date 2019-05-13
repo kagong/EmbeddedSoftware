@@ -1,44 +1,55 @@
 #ifndef _GLOBAL_H_
 #define _GLOBAL_H_
 
-#define FND(data) data[0] << 12 | data[1] << 8 | data[2] << 4 | data[0]
+#define FND(data) data[0] << 12 | data[1] << 8 | data[2] << 4 | data[3]
 
 #define write_to_device(val,f_idx,f_dir,s_idx,s_dir) do{\
     outw((unsigned short int)(FND(fnd_data)),(unsigned int)iom_fpga_fnd_addr);\
     for(i = 0 ; i < 10; i++)\
         outw((unsigned short int)dot_data[val][i],(unsigned int)iom_fpga_dot_addr + i*2);\
-    outw((unsigned short)(1 << (val-1)),(unsigned int)iom_fpga_led_addr);\
+    outw((unsigned short)(0x80 >> (val-1)),(unsigned int)iom_fpga_led_addr);\
     new_idx = f_idx + f_dir;\
-    if (0 >  new_idx || new_idx + strlen(name) >=16)\
+    if (0 >  new_idx || new_idx + strlen(name)-1 >=16)\
         f_dir *= -1;\
+    for(i = 0 ; i < 16; i++){\
+        text[0][i] = 0;\
+        text[1][i] = 0;\
+    }\
     new_idx = f_idx + f_dir;\
-    if (0 <=  new_idx && new_idx + strlen(name) <16){\
+    if (0 <=  new_idx && new_idx + strlen(name)-1 <16){\
         for(i = 0 ; i < strlen(name); i++){\
-            unsigned short int temp_data = ((name[i] & 0xFF) << 8 | (name[i+1] & 0xFF));\
-            outw(temp_data,(unsigned int)iom_fpga_text_lcd_addr+i+new_idx);\
+            text[0][i+new_idx]= name[i];\
         }\
         f_idx = new_idx;\
     }\
     new_idx = s_idx + s_dir;\
-    if (0 >  new_idx || new_idx + strlen(id) >=16){\
+    if (0 >  new_idx || new_idx + strlen(id)-1 >= 16){\
         s_dir *= -1;\
     }\
     new_idx = s_idx + s_dir;\
-    if (0 <=  new_idx && new_idx + strlen(id) <16){  \
+    if (0 <=  new_idx && new_idx + strlen(id)-1 <16){  \
         for(i = 0 ; i < strlen(id); i++){\
-            unsigned short int temp_data = ((id[i] & 0xFF) << 8 | (id[i+1] & 0xFF));\
-            outw(temp_data,(unsigned int)iom_fpga_text_lcd_addr+16+i+new_idx);\
+            text[1][i+new_idx]= id[i];\
         }\
         s_idx = new_idx;\
     }\
+    for(i = 0 ; i < 16;i+=2){\
+        unsigned short int temp_data = ((text[0][i] & 0xFF) << 8 | (text[0][i+1] & 0xFF));\
+        outw(temp_data,(unsigned int)iom_fpga_text_lcd_addr+i);\
+    }\
+    for(i = 0 ; i < 16;i+=2){\
+        unsigned short int temp_data = ((text[1][i] & 0xFF) << 8 | (text[1][i+1] & 0xFF));\
+        outw(temp_data,(unsigned int)iom_fpga_text_lcd_addr+16+i);\
+    }\
 }while(0)\
 
-#define INIT do{\
+#define INIT(data) do{\
+    data[0]=data[1]=data[2]=data[3]=0;\
     outw((unsigned short int)0,(unsigned int)iom_fpga_fnd_addr);\
     for(i = 0 ; i < 10; i++)\
         outw((unsigned short int)0,(unsigned int)iom_fpga_dot_addr + i*2);\
     outw((unsigned short)0,(unsigned int)iom_fpga_led_addr);\
-    for(i = 0 ; i < 32; i++){\
+    for(i = 0 ; i < 32; i+=2){\
         outw((unsigned short int)0,(unsigned int)iom_fpga_text_lcd_addr+i);\
     }\
 }while(0)\
