@@ -4,16 +4,13 @@ obj-m   := fpga_driver.o
 
 KDIR    :=/work/achroimx_kernel
 PWD     :=$(shell pwd)
-APP		:= app
 
-all: driver app
+all: driver 
 #all: driver 
 
 driver:
 	$(MAKE) -C $(KDIR) SUBDIRS=$(PWD) modules ARCH=arm
 
-app: app.c
-	arm-none-linux-gnueabi-gcc -static -o $(APP) $(APP).c
 
 install:
 	cp -a fpga_dot_driver.ko /nfsroot
@@ -22,7 +19,6 @@ clean:
 	rm -rf *.ko
 	rm -rf *.mod.*
 	rm -rf *.o
-	rm -rf $(APP)
 	rm -rf Module.symvers
 	rm -rf modules.order
 	rm -rf .tmp*

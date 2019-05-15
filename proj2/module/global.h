@@ -9,27 +9,27 @@
         outw((unsigned short int)dot_data[val][i],(unsigned int)iom_fpga_dot_addr + i*2);\
     outw((unsigned short)(0x80 >> (val-1)),(unsigned int)iom_fpga_led_addr);\
     new_idx = f_idx + f_dir;\
-    if (0 >  new_idx || new_idx + strlen(name)-1 >=16)\
+    if (0 >  new_idx || new_idx + strlen(id)-1 >=16)\
         f_dir *= -1;\
     for(i = 0 ; i < 16; i++){\
         text[0][i] = 0;\
         text[1][i] = 0;\
     }\
     new_idx = f_idx + f_dir;\
-    if (0 <=  new_idx && new_idx + strlen(name)-1 <16){\
-        for(i = 0 ; i < strlen(name); i++){\
-            text[0][i+new_idx]= name[i];\
+    if (0 <=  new_idx && new_idx + strlen(id)-1 <16){\
+        for(i = 0 ; i < strlen(id); i++){\
+            text[0][i+new_idx]= id[i];\
         }\
         f_idx = new_idx;\
     }\
     new_idx = s_idx + s_dir;\
-    if (0 >  new_idx || new_idx + strlen(id)-1 >= 16){\
+    if (0 >  new_idx || new_idx + strlen(name)-1 >= 16){\
         s_dir *= -1;\
     }\
     new_idx = s_idx + s_dir;\
-    if (0 <=  new_idx && new_idx + strlen(id)-1 <16){  \
-        for(i = 0 ; i < strlen(id); i++){\
-            text[1][i+new_idx]= id[i];\
+    if (0 <=  new_idx && new_idx + strlen(name)-1 <16){  \
+        for(i = 0 ; i < strlen(name); i++){\
+            text[1][i+new_idx]= name[i];\
         }\
         s_idx = new_idx;\
     }\
