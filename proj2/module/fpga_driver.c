@@ -25,10 +25,10 @@ AUTH : largest@huins.com */
 #define IOM_MAJOR 242		// ioboard fpga device major number
 #define IOM_NAME "dev_driver"		// ioboard fpga device name
 
-#define IOM_FND_ADDRESS 0x08000004 // pysical address
-#define IOM_FPGA_DOT_ADDRESS 0x08000210 // pysical address
-#define IOM_LED_ADDRESS 0x08000016 // pysical address
-#define IOM_FPGA_TEXT_LCD_ADDRESS 0x08000090 // pysical address - 32 Byte (16 * 2
+#define IOM_FND_ADDRESS 0x08000004 // pysical address for fnd
+#define IOM_FPGA_DOT_ADDRESS 0x08000210 // pysical address for dot matrix
+#define IOM_LED_ADDRESS 0x08000016 // pysical address for led
+#define IOM_FPGA_TEXT_LCD_ADDRESS 0x08000090 // pysical address for lcd
 
 static int fpga_port_usage = 0;
 
@@ -90,7 +90,7 @@ static void timer_func(unsigned long timeout){
         INIT(fnd_data);
         return ;
     }
-   
+    //find index,value in fnd and increasing them alright
     fnd_data[temp->idx]++; 
     fnd_data[temp->idx] = (fnd_data[temp->idx]-1)%8 + 1;
     if(fnd_data[temp->idx] == temp->start_val){
@@ -103,6 +103,7 @@ static void timer_func(unsigned long timeout){
     write_to_device(val,temp->first_text_idx,temp->first_text_dir,temp->second_text_idx,temp->second_text_dir);
 
     temp->count -= 1;
+    // after interval/10 sec, call timer_func()
     temp->timer.expires = get_jiffies_64() + (temp->interval*HZ/10);
     temp->timer.data = (unsigned long)temp;
     temp->timer.function = timer_func;
@@ -139,7 +140,9 @@ long device_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl
     device_timer.first_text_dir = device_timer.second_text_dir = 1;
 
     write_to_device(start_val,device_timer.first_text_idx,device_timer.first_text_dir,device_timer.second_text_idx,device_timer.second_text_dir);
+    
     del_timer_sync(&device_timer.timer);
+    // after interval/10 sec, call timer_func()
     device_timer.timer.expires = jiffies + (interval*HZ/10);
     device_timer.timer.data = (unsigned long)&device_timer;
     device_timer.timer.function = timer_func;
@@ -160,7 +163,9 @@ int __init iom_fpga_init(void)
 		printk(KERN_WARNING"Can't get any major\n");
 		return result;
 	}
+    //allocate resource
 
+    //mmep init
 	iom_fpga_fnd_addr = ioremap(IOM_FND_ADDRESS, 0x4);
 	iom_fpga_text_lcd_addr = ioremap(IOM_FPGA_TEXT_LCD_ADDRESS, 0x32);
 	iom_fpga_dot_addr = ioremap(IOM_FPGA_DOT_ADDRESS, 0x10);
@@ -173,6 +178,7 @@ int __init iom_fpga_init(void)
 
 void __exit iom_fpga_exit(void) 
 {
+    //free resource
 	iounmap(iom_fpga_fnd_addr);
 	iounmap(iom_fpga_text_lcd_addr);
 	iounmap(iom_fpga_dot_addr);
