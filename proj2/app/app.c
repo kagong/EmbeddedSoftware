@@ -16,10 +16,12 @@ int main(int argc,char** argv){
     interval = atoi(argv[1]);
     count = atoi(argv[2]);
     val = atoi(argv[3]);
+    //error handling
     if( (1 >interval || interval >100) || (1 >count || count >100) || (1 >val || val >8000)){
         printf("arg error!\n");
         return -1;
     }
+    //call system call (make fpga data)
     unsigned int data = syscall(376,interval,count,val);
     dev = open("/dev/dev_driver",O_WRONLY);
     if(dev <0 ){

@@ -1,8 +1,15 @@
 #ifndef _GLOBAL_H_
 #define _GLOBAL_H_
 
+/*
+ * macro for making data of fnd
+ */
 #define FND(data) data[0] << 12 | data[1] << 8 | data[2] << 4 | data[3]
 
+/*
+ * macro for write to device
+ * it print to fpga deices such fnd, dot_matrix, led, text_lcd
+ */
 #define write_to_device(val,f_idx,f_dir,s_idx,s_dir) do{\
     outw((unsigned short int)(FND(fnd_data)),(unsigned int)iom_fpga_fnd_addr);\
     for(i = 0 ; i < 10; i++)\
@@ -43,6 +50,9 @@
     }\
 }while(0)\
 
+/*
+ * macro for init device(fpag devices)
+ */
 #define INIT(data) do{\
     data[0]=data[1]=data[2]=data[3]=0;\
     outw((unsigned short int)0,(unsigned int)iom_fpga_fnd_addr);\

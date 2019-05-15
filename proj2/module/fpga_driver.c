@@ -46,10 +46,12 @@ typedef struct _device_timer{
 _device_timer device_timer;
 
 static unsigned char fnd_data[4];
+
 // define functions...
 int iom_fpga_open(struct inode *minode, struct file *mfile);
 int iom_fpga_release(struct inode *minode, struct file *mfile);
 long device_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param);
+
 // define file_operations structure 
 struct file_operations iom_fpga_fops =
 {
@@ -59,7 +61,6 @@ struct file_operations iom_fpga_fops =
 	.release=	iom_fpga_release
 };
 
-// when fnd device open ,call this function
 int iom_fpga_open(struct inode *minode, struct file *mfile) 
 {
 	if(fpga_port_usage != 0) return -EBUSY;
@@ -69,7 +70,6 @@ int iom_fpga_open(struct inode *minode, struct file *mfile)
 	return 0;
 }
 
-// when fnd device close ,call this function
 int iom_fpga_release(struct inode *minode, struct file *mfile) 
 {
 	fpga_port_usage = 0;
@@ -77,7 +77,8 @@ int iom_fpga_release(struct inode *minode, struct file *mfile)
 	return 0;
 }
 
-// when write to fnd device  ,call this function
+// called by timer 
+// change the data and print to devices
 static void timer_func(unsigned long timeout){
     unsigned int val;
     char *name = STUDENT_NAME, *id= STUDENT_ID;
@@ -108,6 +109,7 @@ static void timer_func(unsigned long timeout){
 
     add_timer(&temp->timer);
 }
+//ioctl function
 long device_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param){
     unsigned int interval,start_val,start_idx, count;
     char *name = STUDENT_NAME, *id= STUDENT_ID;
