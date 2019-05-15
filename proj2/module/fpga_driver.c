@@ -109,6 +109,7 @@ static void timer_func(unsigned long timeout){
 
     add_timer(&temp->timer);
 }
+
 //ioctl function
 long device_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param){
     unsigned int interval,start_val,start_idx, count;
@@ -118,7 +119,10 @@ long device_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl
     int i;
     short new_idx;
 
+    //init device
     INIT(fnd_data);
+
+    //take the data form user level memory and check the invalid
     get_user(data,(unsigned int *)ioctl_param);
     start_idx = (data >> (8*3)) & 0xFF;
     start_val = (data >> (8*2)) & 0xFF;
@@ -126,6 +130,7 @@ long device_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl
     interval = (data >> (8*0)) & 0xFF;
     fnd_data[start_idx] = start_val;
 
+    //data structure init
     device_timer.idx = start_idx;
     device_timer.count = count-1;
     device_timer.start_val = start_val;
@@ -138,6 +143,8 @@ long device_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl
     device_timer.timer.expires = jiffies + (interval*HZ/10);
     device_timer.timer.data = (unsigned long)&device_timer;
     device_timer.timer.function = timer_func;
+
+    //call timer
     add_timer(&device_timer.timer);
     return 1;
 
