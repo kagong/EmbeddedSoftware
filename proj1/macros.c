@@ -19,12 +19,12 @@ void set_value(){
     _exp[2][2] = 1 << 3;
     _exp[2][3] = 1;
     _exp[3][0] = 1 << 6;
-    _exp[3][1] = 1 << 3;
+    _exp[3][1] = 1 << 4;
     _exp[3][2] = 1 << 2;
     _exp[3][3] = 1;
     max_notation[0]=2;
     max_notation[1]=10;
-    max_notation[2]=4;
-    max_notation[3]=8;
+    max_notation[2]=8;
+    max_notation[3]=4;
 
 }
