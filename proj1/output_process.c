@@ -23,6 +23,8 @@ void output_process(){
     unsigned long *fpga_addr = 0;
     unsigned char *led_addr =0;
 
+    unsigned char fnd_init[4] = {0,};
+    unsigned char text_init[LEN_TEXT] = {0,};
     int i, mode,prev_flash_flag;
     int dev_dot,dev_text,dev_fnd,dev_led,dev_buzzer;
 
@@ -74,6 +76,7 @@ void output_process(){
         temp = msgrcv( key_id, &msg, sizeof(msg), 0,IPC_NOWAIT) ;
         if(temp != -1){
             if(msg.msgtype == 1){               //exit
+                INIT_DEV;
                 munmap(led_addr, 4096); 
                 EXIT_HANDLING_OUTPUT;
             }

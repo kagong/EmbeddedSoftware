@@ -128,6 +128,8 @@ void set_value();
     memset(&devices,0,sizeof(devices));\
     *led_addr = 0;\
     write(dev_dot,devices.dot_matrix,sizeof(devices.dot_matrix));\
+    write(dev_fnd,&fnd_init,4);\
+    write(dev_text,text_init,LEN_TEXT);\
 }while(0)
 
 /* NAME : PUSH_MAP
