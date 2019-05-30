@@ -15,7 +15,7 @@
 #include <linux/cdev.h>
 
 #define DEV_NAME "/dev/stopwatch"
-#define MAJOR_NUM 242"
+#define MAJOR_NUM 242
 #define INTVAL 100
 
 #define IOM_FND_ADDRESS 0x08000004 // pysical address for fnd
@@ -23,6 +23,8 @@
 #define INIT do{\
     device_timer.flag = 0;\
     device_timer.tic = 0;\
+    exit_timer.flag = 0;\
+    TIMER_WRITE;\
 }while(0)
 
 #define FND fnd_data[0] << 12 | fnd_data[1] << 8 | fnd_data[2] << 4 | fnd_data[3]
@@ -61,7 +63,7 @@ int interruptCount=0;
 //------new defined var & fun
 unsigned int tic=0;
 unsigned char fnd_data[4];
-typedef struct _device_timer{
+typedef struct __device_timer{
     struct timer_list timer;
     unsigned int tic;
     unsigned short flag;
@@ -70,8 +72,9 @@ _device_timer device_timer,exit_timer;
 
 wait_queue_head_t que;
 DECLARE_WAIT_QUEUE_HEAD(que);
-int play_flag = 0;
-static void timer_set(_device_timer *t);
+static void timer_func(unsigned long timeout);
+static void exit_func(unsigned long timeout);
+static void timer_set(_device_timer *t,int sec,void (*func)(unsigned long));
 //-------------------
 static struct file_operations inter_fops =
 {
@@ -92,12 +95,11 @@ irqreturn_t inter_start(int irq, void* dev_id, struct pt_regs* reg) {
 irqreturn_t inter_pause(int irq, void* dev_id, struct pt_regs* reg) {
     printk("pause\n");
     if(device_timer.flag == 1){
-        del_timer_sync(&t.timer);
+        del_timer(&device_timer.timer);
         device_timer.flag = 0;
     }
     else{
         device_timer.flag = 1;
-        timer_set(&device_timer);
         timer_set(&device_timer,1,&timer_func);
     }
     
@@ -112,23 +114,21 @@ irqreturn_t inter_reset(int irq, void* dev_id,struct pt_regs* reg) {
     return IRQ_HANDLED;
 }
 
-irqreturn_t inter_exit_low(int irq, void* dev_id, struct pt_regs* reg) {
-    printk("exit_low\n");
-    if(exit_timer.flag == 0){
+irqreturn_t inter_quit(int irq, void* dev_id, struct pt_regs* reg) {
+    printk("exit\n");
+    if(exit_timer.flag == 1){
+        exit_timer.flag = 0;
+        del_timer(&exit_timer.timer);
+    }
+    else{
         exit_timer.flag = 1;
         timer_set(&exit_timer,3*INTVAL,&exit_func);
     }
     return IRQ_HANDLED;
 }
-irqreturn_t inter_exit_rise(int irq, void* dev_id, struct pt_regs* reg) {
-    printk("exit_fail\n");
-    exit_timer.flag = 0;
-    del_timer_sync(&exit_timer.timer);
-    return IRQ_HANDLED;
-}
 
 static void timer_func(unsigned long timeout){
-    struct_device_timer *temp = (_device_timer *)timeout;
+    _device_timer *temp = (_device_timer *)timeout;
     if(++(temp->tic)>=100){
         temp -> tic = 0;
         TIMER_UP;
@@ -139,14 +139,15 @@ static void timer_func(unsigned long timeout){
 static void exit_func(unsigned long timeout){
     fnd_data[0] = fnd_data[1] = fnd_data[2] = fnd_data[3] = 0;
     TIMER_WRITE;
+    del_timer(&device_timer.timer);
     __wake_up(&que,1,1,NULL);
 }
 static void timer_set(_device_timer *t,int sec,void (*func)(unsigned long)){
-    del_timer_sync(&t.timer);
+    del_timer(&(t->timer));
     t ->timer.expires = jiffies + (sec*HZ/INTVAL);
     t ->timer.data = (unsigned long)t;
     t ->timer.function = func;
-    add_timer(&t.timer);
+    add_timer(&(t->timer));
 }
 static int inter_open(struct inode *minode, struct file *mfile){
     int ret;
@@ -173,8 +174,7 @@ static int inter_open(struct inode *minode, struct file *mfile){
     // int4
     gpio_direction_input(IMX_GPIO_NR(5,14));
     irq = gpio_to_irq(IMX_GPIO_NR(5,14));
-    ret = request_irq(irq,inter_exit_low,IRQF_TRIGGER_LOW,"timer_voldown_low",NULL);
-    ret = request_irq(irq,inter_exit_rise,IRQF_TRIGGER_RISING,"timer_voldown_rise",NULL);
+    ret = request_irq(irq,inter_quit,IRQF_TRIGGER_FALLING|IRQF_TRIGGER_RISING,"timer_voldown_down",NULL);
 
     return 0;
 }
@@ -226,9 +226,11 @@ static int __init inter_init(void) {
     int result;
     if((result = inter_register_cdev()) < 0 )
         return result;
+    init_timer(&(device_timer.timer));
+    init_timer(&(exit_timer.timer));
 	iom_fpga_fnd_addr = ioremap(IOM_FND_ADDRESS, 0x4);
     printk(KERN_ALERT "Init Module Success \n");
-    printk(KERN_ALERT "Device : /dev/inter, Major Num : 246 \n");
+    printk(KERN_ALERT "Device : /dev/stopwatch, Major Num : 242 \n");
     return 0;
 }
 
@@ -236,8 +238,8 @@ static void __exit inter_exit(void) {
     cdev_del(&inter_cdev);
     unregister_chrdev_region(inter_dev, 1);
 	iounmap(iom_fpga_fnd_addr);
-    del_timer_sync(&device_timer.timer);
-    del_timer_sync(&exit_timer.timer);
+    del_timer_sync(&(device_timer.timer));
+    del_timer_sync(&(exit_timer.timer));
     printk(KERN_ALERT "Remove Module Success \n");
 }
 

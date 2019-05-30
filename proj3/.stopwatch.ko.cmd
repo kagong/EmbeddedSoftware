@@ -1,0 +1,1 @@
+cmd_/home/embe/EmbeddedSoftware/proj3/stopwatch.ko := arm-none-linux-gnueabi-ld -EL -r  -T /work/achroimx_kernel/scripts/module-common.lds --build-id  -o /home/embe/EmbeddedSoftware/proj3/stopwatch.ko /home/embe/EmbeddedSoftware/proj3/stopwatch.o /home/embe/EmbeddedSoftware/proj3/stopwatch.mod.o
