@@ -16,10 +16,11 @@ public class MyCounterService extends Service{
     IBinder mBinder = new MyBinder();
     Thread thd;
     class MyBinder extends Binder {
-        MyCounterService getService() { // 서비스 객체를 리턴
+        MyCounterService getService() { // return service obj
             return MyCounterService.this;
         }
     }
+    //this class increase timer 
     private class Timer implements Runnable {
 
     	boolean running = true;
@@ -35,26 +36,26 @@ public class MyCounterService extends Service{
     }
     @Override
     public IBinder onBind(Intent intent) {
-        // 액티비티에서 bindService() 를 실행하면 호출됨
-        // 리턴한 IBinder 객체는 서비스와 클라이언트 사이의 인터페이스 정의한다
-        return mBinder; // 서비스 객체를 리턴
+        return mBinder; // return service binder
     }
     public boolean onUnbind(Intent intent) { 
     	 return super.onUnbind(intent); 
     }
 
     
-    void startTimer() { // 임의 랜덤값을 리턴하는 메서드
+    void startTimer() { // run timer thread
     	count=0;
     	timer = new Timer();
     	thd = new Thread(timer);
     	thd.start();
     }
-    void stopTimer() { // 임의 랜덤값을 리턴하는 메서드
+    void stopTimer() { // exit timer thread
     	if(timer != null)
     		timer.stop();
     	
     }
+    //this function is called by activity
+    //return time
     String getTimeString(){
     	String min = Integer.toString((count/10)/60),sec =Integer.toString((count/10)%60);
     	if(min.length() == 1)

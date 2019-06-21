@@ -36,7 +36,7 @@ public class MainActivity2 extends Activity{
         
         public void onServiceConnected(ComponentName name, IBinder service){
         	MyBinder mb = (MyBinder) service;
-        	ms = mb.getService(); // 서비스가 제공하는 메소드 호출하여
+        	ms = mb.getService(); //return service object by binder
         	isService = true;
         }        
         public void onServiceDisconnected(ComponentName name) { 
@@ -47,6 +47,7 @@ public class MainActivity2 extends Activity{
 	private void initButtons(){
 		buttonLinear.removeAllViews();
 	}
+    //buttons's listener it works for puzzle game
 	OnClickListener button_listener=new OnClickListener(){
 		public void onClick(View v){
 			Button temp = (Button)v;
@@ -58,7 +59,7 @@ public class MainActivity2 extends Activity{
             }
 		}
 	};
-	
+	//start timer of timer service
     private void startTimer(){
     	ms.startTimer();
     	if(isstart == false){
@@ -69,11 +70,12 @@ public class MainActivity2 extends Activity{
 
     	running =true;
     }
+	//stop timer of timer service
     private void stopTimer(){
     	ms.stopTimer();
     	running =false;
     }
-   
+   //check the ending condtion of puzzle game
     private int check_button(){
     	if(row ==1 && col == 1)
     		return 1;
@@ -91,6 +93,9 @@ public class MainActivity2 extends Activity{
         btns[i].setBackgroundColor(Color.BLACK);
         btns[i].setText("0");
     }
+
+    //when pushed the button,then the idx is buttons's text,
+    //and this function decide the swaping button
     private void push_button(int idx){
         if(idx == 0)
             return ;
@@ -130,6 +135,7 @@ public class MainActivity2 extends Activity{
             }
         }
     }
+
     private void makePuzzle(int idx){
         Random rnd = new Random();
         for(int i=0;i<300;i++){
@@ -167,6 +173,8 @@ public class MainActivity2 extends Activity{
             	--i;
         }
     }
+    //when pushed make button
+    //this function makes buttons like 1,2,3,.... and black
 	private void makeButtons(){
 		btns = new Button[row*col];
 		
@@ -200,7 +208,7 @@ public class MainActivity2 extends Activity{
 		}
 	}
 	
-		@Override
+	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 
 		// TODO Auto-generated method stub
@@ -220,7 +228,6 @@ public class MainActivity2 extends Activity{
 
 		data=(EditText)findViewById(R.id.textedit);
 		
-		data.setText("5 5");
 		OnClickListener make_listener=new OnClickListener(){
 			public void onClick(View v){
 				String temp=data.getText().toString();
@@ -243,7 +250,8 @@ public class MainActivity2 extends Activity{
     	super.onDestroy();
     	unbindService(conn);
     }
-	
+	//its take periodically the time from mycountservice
+    //and update time of timetext
 	private class GetTime implements Runnable {
 		private Handler handler = new Handler();
 		public void run() {
