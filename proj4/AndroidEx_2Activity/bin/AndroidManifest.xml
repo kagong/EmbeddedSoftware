@@ -19,6 +19,8 @@
             </intent-filter>
         </activity>
         <activity android:name="MainActivity2"></activity>
+        <service android:name="MyCounterService"></service>
+
     </application>
 
 </manifest>
