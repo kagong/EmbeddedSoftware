@@ -13,4 +13,4 @@ clean :
 	rm -rf *.order
 	rm -rf *.symvers
 	rm -rf .tmp*
-	rm -rf .stop*
+	rm -rf .elev*
