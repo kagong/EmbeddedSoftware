@@ -1,15 +1,41 @@
-
-import java.util.Random
-public enum StateUpDown{
-    NONE,UP,DOWN,UPDOWN
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Random;
+enum StateUpDown{
+    NONE(0),UP(1),DOWN(2),UPDOWN(3);	
+	private final int value;
+	private StateUpDown(int value){
+		this.value = value;
+	}
+	public int getValue(){
+		return value;
+	}
 }
-public enum StateMove{
-        MOVE,STOP
+enum StateMove{
+        MOVE(0),STOP(1);
+	private final int value;
+	private StateMove(int value){
+		this.value = value;
+	}
+	public int getValue(){
+		return value;
+	}
+	
 }
-public enum IntrBtn{
-        VOLUP,VOLDOWN,BACK
+enum IntrBtn{
+        VOLUP(0),VOLDOWN(1),BACK(2);
+	private final int value;
+	private IntrBtn(int value){
+		this.value = value;
+	}
+	public int getValue(){
+		return value;
+	}	
+	
 }
 public class EVSystem implements Runnable{
+
+
     native int getSwitch();
     native int getIntrBtn();
     native void setDot(int flag);
@@ -18,11 +44,11 @@ public class EVSystem implements Runnable{
     static {
         System.loadLibrary("EVSystem");
     };    
-    public class Floor(){
-        public class Person(){
+    public class Floor{
+        public class Person{
             private StateUpDown state;
-            public Person(State state){
-                this.state = flag;
+            public Person(StateUpDown state){
+                this.state = state;
             }
             public StateUpDown getState(){
                 return this.state;
@@ -34,22 +60,22 @@ public class EVSystem implements Runnable{
 
         //constructor for floor class
         public Floor(int floorNum){
-            this.people = new List<Person>();
+            this.people = new ArrayList<Person>();
             this.floorNum = floorNum;
-            this.buttonState = NONE;
+            this.buttonState = StateUpDown.NONE;
         }
-        public addPerson(StateUpDown state){
-            if(state == UP||state == DOWN){
+        public void addPerson(StateUpDown state){
+            if(state == StateUpDown.UP||state == StateUpDown.DOWN){
                 Person person = new Person(state);
                 people.add(person);
-                if (people.state == UP && buttonState == NONE)
-                    buttonState = UP;
-                else if (people.state == UP && buttonState == DOWN)
-                    buttonState = UPDOWN;
-                else if (people.state == DOWN && buttonState == NONE)
-                    buttonState = DOWN;
-                else if (people.state == DOWN && buttonState == UP)
-                    buttonState = UPDOWN;
+                if (state == StateUpDown.UP && buttonState == StateUpDown.NONE)
+                    this.buttonState = StateUpDown.UP;
+                else if (state == StateUpDown.UP && buttonState == StateUpDown.DOWN)
+                    this.buttonState = StateUpDown.UPDOWN;
+                else if (state == StateUpDown.DOWN && buttonState == StateUpDown.NONE)
+                    this.buttonState = StateUpDown.DOWN;
+                else if (state == StateUpDown.DOWN && buttonState == StateUpDown.UP)
+                    this.buttonState = StateUpDown.UPDOWN;
             }
             else{
                 //error
@@ -59,22 +85,22 @@ public class EVSystem implements Runnable{
             return this.people;
         }
     }
-    public class Elevator(){
+    public class Elevator{
         int personNum;
         int nowFloor;
-        boolean btnstate[7];
+        boolean btnstate[] = new boolean[7];
         StateMove stateMove;
         StateUpDown stateUpDown;
         public Elevator(){
             this.personNum = 0;
-            thos.nowFloor = 1;
+            this.nowFloor = 1;
             for(int i=0;i<7;i++)
                 btnstate[i] = false;
-            stateMove = STOP;
-            stateUpDown = NONE;
+            stateMove = StateMove.STOP;
+            stateUpDown = StateUpDown.NONE;
         }
         public void evitPerson(){
-            if(StateMove == STOP){
+            if(stateMove == StateMove.STOP){
                 this.personNum-=1;
             }
         }
@@ -85,6 +111,7 @@ public class EVSystem implements Runnable{
     int tic;
     //constructor for elevator system class 
     public EVSystem(){
+	floors = new ArrayList<Floor>();
         for(int i = 0 ; i  < 7; i++){
             Floor floor = new Floor(i+1);
             this.floors.add(floor);
@@ -92,7 +119,7 @@ public class EVSystem implements Runnable{
         this.elevator = new Elevator();
         this.tic = 0;
     }
-    public int getFloor(int i){//0부터 시작
+    public Floor getFloor(int i){//0부터 시작
         return floors.get(i);
     }
     public void run(){
@@ -101,27 +128,27 @@ public class EVSystem implements Runnable{
         this.running = true;
         while(running){
             int n = getSwitch();
-            IntrBtn btn = getIntrBtn();
+            int btn = getIntrBtn();
             elevator.btnstate[n] = true;
-            if(btn == VOLUP){
+            if(btn == IntrBtn.VOLUP.getValue()){
                 int floorNum = rnd.nextInt(6);
-                floors.get(floorNum).addPerson(UP);
+                floors.get(floorNum).addPerson(StateUpDown.UP);
             }
-            else if(btn == VOLDOWN){
+            else if(btn == IntrBtn.VOLDOWN.getValue()){
                 int floorNum = rnd.nextInt(6)+1;
-                floors.get(floorNum).addPerson(DOWN);
+                floors.get(floorNum).addPerson(StateUpDown.DOWN);
             }
-            else if(btn == BACK){
+            else if(btn == IntrBtn.BACK.getValue()){
                 elevator.evitPerson();
             }
             
-            StateUpDown UpDown = callSyscall();
+            StateUpDown UpDown = StateUpDown.values()[callSyscall()];
             
-            if(Updown !=elevator.stateUpDown && UpDown == NONE)
+            if(UpDown !=elevator.stateUpDown && UpDown == StateUpDown.NONE)
                 setDot(0);
-            if(Updown !=elevator.stateUpDown && UpDown == UP)
+            if(UpDown !=elevator.stateUpDown && UpDown == StateUpDown.UP)
                 setDot(1);
-            if(Updown !=elevator.stateUpDown && UpDown == DOWN)
+            if(UpDown !=elevator.stateUpDown && UpDown == StateUpDown.DOWN)
                 setDot(2);
         }
     }
