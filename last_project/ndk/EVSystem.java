@@ -1,23 +1,31 @@
+
+import java.util.Random
+public enum StateUpDown{
+    NONE,UP,DOWN,UPDOWN
+}
+public enum StateMove{
+        MOVE,STOP
+}
+public enum IntrBtn{
+        VOLUP,VOLDOWN,BACK
+}
 public class EVSystem implements Runnable{
     native int getSwitch();
-    native int getVolUp();
-    native int getVolDown();
-    native int getBack();
-    native void callSyscall();
-    public enum StateUpDown{
-        NONE,UP,DOWN,UPDOWN
-    }
-    public enum StateMove{
-        MOVE,STOP
-    }
+    native int getIntrBtn();
+    native void setDot(int flag);
+    native void setLed(int flag);
+    native int callSyscall();
     static {
         System.loadLibrary("EVSystem");
     };    
     public class Floor(){
-        private class Person(){
-            StateUpDown state;
-            private Person(State state){
+        public class Person(){
+            private StateUpDown state;
+            public Person(State state){
                 this.state = flag;
+            }
+            public StateUpDown getState(){
+                return this.state;
             }
         }
         List<Person> people;
@@ -47,6 +55,9 @@ public class EVSystem implements Runnable{
                 //error
             }
         }
+        public List<Person> getPeople(){
+            return this.people;
+        }
     }
     public class Elevator(){
         int personNum;
@@ -62,20 +73,59 @@ public class EVSystem implements Runnable{
             stateMove = STOP;
             stateUpDown = NONE;
         }
+        public void evitPerson(){
+            if(StateMove == STOP){
+                this.personNum-=1;
+            }
+        }
     }
     List<Floor> floors;
     Elevator elevator;
-
+    boolean running;
+    int tic;
     //constructor for elevator system class 
     public EVSystem(){
         for(int i = 0 ; i  < 7; i++){
             Floor floor = new Floor(i+1);
-            floors.add(floor);
+            this.floors.add(floor);
         }
-        elevator = new Elevator();
+        this.elevator = new Elevator();
+        this.tic = 0;
+    }
+    public int getFloor(int i){//0부터 시작
+        return floors.get(i);
     }
     public void run(){
+        Random rnd = new Random();
+        this.tic += 1;
+        this.running = true;
+        while(running){
+            int n = getSwitch();
+            IntrBtn btn = getIntrBtn();
+            elevator.btnstate[n] = true;
+            if(btn == VOLUP){
+                int floorNum = rnd.nextInt(6);
+                floors.get(floorNum).addPerson(UP);
+            }
+            else if(btn == VOLDOWN){
+                int floorNum = rnd.nextInt(6)+1;
+                floors.get(floorNum).addPerson(DOWN);
+            }
+            else if(btn == BACK){
+                elevator.evitPerson();
+            }
+            
+            StateUpDown UpDown = callSyscall();
+            
+            if(Updown !=elevator.stateUpDown && UpDown == NONE)
+                setDot(0);
+            if(Updown !=elevator.stateUpDown && UpDown == UP)
+                setDot(1);
+            if(Updown !=elevator.stateUpDown && UpDown == DOWN)
+                setDot(2);
+        }
     }
     public void stop(){
+        this.running = false;
     }
 }
