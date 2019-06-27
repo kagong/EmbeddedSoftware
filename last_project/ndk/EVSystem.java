@@ -178,7 +178,6 @@ public class EVSystem implements Runnable{
             		if(stoptic >= 80) {//8sec
             			stoptic = 0;
             			this.elevator.stateMove = StateMove.MOVE;
-//call syscall               
             		}
             		else{
             			Floor temp = this.floors.get(this.elevator.nowFloor-1);
@@ -201,8 +200,10 @@ public class EVSystem implements Runnable{
             		}
 			
                 }
-                else
+                else{
                 	stoptic = 0;
+                    this.elevator.stateUpDown = StateUpDown.NONE;
+                }
             	
             }
             else {//move 10sec
@@ -286,5 +287,13 @@ public class EVSystem implements Runnable{
     }
     public void stop(){
         this.running = false;
+    }
+    public static void main(String[] args){
+        EVSystem temp = new EVSystem();
+        temp.run();
+        for(int i = 0; i < 7 ; i++){
+            System.out.println("%d floor %d person",i,);
+        }
+
     }
 }

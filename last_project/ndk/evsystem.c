@@ -31,7 +31,7 @@ JNIEXPORT void JNICALL Java_EVSystem_setDot (JNIEnv *env, jobject obj, jint data
      */
 }
 
-JNIEXPORT void JNICALL Java_EVSystem_setLed (JNIEnv *, jobject obj, jint data){
+JNIEXPORT void JNICALL Java_EVSystem_setLed (JNIEnv *env, jobject obj, jint data){
     /*
      * ioctl() <- data
      * data & 0x01 = 1st floor
@@ -42,3 +42,32 @@ JNIEXPORT void JNICALL Java_EVSystem_setLed (JNIEnv *, jobject obj, jint data){
      * data & 0x07 = 7th floor
      */
 }
+JNIEXPORT void JNICALL Java_EVSystem_setBuzzer (JNIEnv *env, jobject obj){
+}
+JNIEXPORT void JNICALL Java_EVSystem_openDevice (JNIEnv *env, jobject obj){
+}
+JNIEXPORT void JNICALL Java_EVSystem_closeDevice (JNIEnv *env, jobject obj){
+}
+
+/*
+ * data1 : now floor number (start 1)
+ * data2 : elevator state (0 : NONE, 1:UP 3:DOWN)
+ * data3[7] : each floor's button state (0 : NONE, 1: UP, 2: DOWN ,3: UPDOWN)
+ * data4[7] : each elev buttons state (on : 1 , off :0)
+ * return value = state (1: UP 2: DOWN)
+ */
+JNIEXPORT jint JNICALL Java_EVSystem_callSyscall (JNIEnv *env, jobject obj, jint data1, jint data2, jintArray data3, jintArray data4){
+    int retval;
+    jint *arr1 = (*env) - > GetIntArrayElements(env,data3,0);
+    jint *arr2 = (*env) - > GetIntArrayElements(env,data4,0);
+    
+
+    /*
+     * retval =  syscall(data1,data2,arr1,arr2)
+     */
+    (*env) -> ReleaseIntArrayElements(env,data1,arr1,0);
+    (*env) -> ReleaseIntArrayElements(env,data2,arr2,0);
+    return retval;
+}
+
+
