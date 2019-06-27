@@ -10,10 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
@@ -94,6 +91,12 @@ public class MainActivity2 extends Activity{
 			e.printStackTrace();
 		}
 		
+		for (int i = 0 ; i < 7 ; i++){
+			for (int j = 0 ; j < 10 ; j++){
+				customer[i][j] = 0;
+			}
+		}
+		
 		new Thread(new get_data()).start();
 	}
 
@@ -110,7 +113,7 @@ public class MainActivity2 extends Activity{
 			int[] prev_length = new int[10];
 			while(true){
 				try {
-					Thread.sleep(100);
+					Thread.sleep(200);
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -120,18 +123,21 @@ public class MainActivity2 extends Activity{
 				
 
 				for (int i = 0 ; i < 7 ; i++){
-					if (prev_length[i] == floors.get(i).people.size()){
-						for (int j = 0 ; j < floors.get(i).people.size() ; j++){
+					if (prev_length[i] != floors.get(i).people.size()){
+		/*				for (int j = 0 ; j < floors.get(i).people.size() ; j++){
 							if (floors.get(i).people.get(j).state.getValue() != customer[i][j]){
 								flag = 0;
 							}
 						}
 					}
-					else{
+					else{*/
 						flag = 0;
 						prev_length[i] = floors.get(i).people.size();				
 					}
+					
+					Log.d("size", "" + prev_length[i] + " and " + floors.get(i).people.size());
 				}				
+				Log.d("pass", "next");
 				
 				
 				if (flag == 0){
@@ -212,36 +218,24 @@ public class MainActivity2 extends Activity{
 		linear[6] = (LinearLayout)findViewById(R.id.floor7);
 		
 
-
+		Log.d("print", "iunin");
 
 
 		for(int i = 0 ; i < 7 ; i++){
-			for(int j = 0 ; j < 10 ; j++){
-				
-				final int ii = i;
-				final int jj = j;				
-				runOnUiThread(new Runnable(){
-					ImageView img;
-					@Override
-					public void run(){
-						
-						img = (ImageView)findViewById(ii*10+jj);		
-						if (img != null){
-							img.setVisibility(View.GONE);
-						}
-					}
-				});
-				
-				
-			}
+			final int ii = i;
+
+			runOnUiThread(new Runnable(){
+				@Override
+				public void run(){
+					linear[ii].removeAllViews();
+				}
+			});		
 		}
 
 
 		for (int i = 0 ; i < 7 ; i++){
 			for(int j = 0 ; j < 10 ; j++){
 				if(customer[i][j] == 0) continue;
-				
-				
 				
 
 				final ImageView img = new ImageView(this);
@@ -260,7 +254,6 @@ public class MainActivity2 extends Activity{
 						else if (customer[ii][jj] == 2){
 							img.setImageResource(R.drawable.going_down);
 						}
-						img.setId(ii*10 + jj);
 						linear[ii].addView(img);	
 
 					}
