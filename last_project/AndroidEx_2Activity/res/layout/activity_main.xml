@@ -23,7 +23,7 @@
         android:layout_gravity="center_horizontal"
         android:paddingBottom="50dp"
         android:paddingTop="50dp"
-        android:text="Made by\nHwang Kiduk\nYoon Jaehyung\nChung Jaehoon"
+        android:text="Made by\nHwang Kideok\nYoon Jaehyung\nChung Jaehoon"
         android:textAlignment='gravity'
         android:textAppearance="@style/AppTheme"
         android:textSize="20sp" />
