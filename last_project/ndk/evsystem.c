@@ -1,6 +1,6 @@
 #include "EVSystem.h"
 
-
+//retval == -1 none
 JNIEXPORT jint JNICALL Java_EVSystem_getSwitch (JNIEnv *env, jobject obj){
     int retval;
     /*
@@ -11,6 +11,7 @@ JNIEXPORT jint JNICALL Java_EVSystem_getSwitch (JNIEnv *env, jobject obj){
     return retval;
 }
 
+//retval == -1 none
 JNIEXPORT jint JNICALL Java_EVSystem_getIntrBtn (JNIEnv *env, jobject obj){
     int retval;
     /*
