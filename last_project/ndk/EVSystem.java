@@ -160,7 +160,7 @@ public class EVSystem implements Runnable{
     }
     public void run(){
         int stoptic=0,movetic=0,data;
-        boolean isOpen =false;
+        boolean isOpen =false,openningREQ = false;
         Random rnd = new Random();
         this.running = true;
         openDevice();
@@ -170,21 +170,29 @@ public class EVSystem implements Runnable{
             if(this.elevator.stateMove == StateMove.STOP) {
             	
             	boolean isIdle = true;
-                if(stoptic == 0){
-                    //openning voice
-                    isOpen = true;
+                
+                for(int i = 0 ; isOpen == false && i < 7 ; i++) {//idle
+                	if(this.elevator.btnstate[i] == true || this.floors.get(i).buttonState != StateUpDown.NONE){
+                        if(i == this.elevator.floorNum - 1)
+                            openningREQ = true;
+                        else
+                		    isIdle = false;
+                    }
+                }
+                if(openningREQ == true){
+                    openningREQ = false;
+                    stoptic = 0;
+                    if(isOpen == false){
+                        isOpen = true;
+                        //openning voice
+                    }
                 }
                 stoptic = (stoptic + 1 > 80)? stoptic : stoptic + 1;
-                for(int i = 0 ; isOpen == false && i < 7 ; i++) {//idle
-                	if(this.elevator.btnstate[i] == true || this.floors.get(i).buttonState != StateUpDown.NONE)
-                		isIdle = false;
-                }
-                if(isOpen || isIdle == false) {//open door or not idle
+                if(isOpen) {//open door or not idle
             		if(stoptic >= 80) {//8sec
-                        if(isIdle == false){
-            			    stoptic = 0;
+                        if(isIdle == false)
             			    this.elevator.stateMove = StateMove.MOVE;
-                        }
+                        
                         isOpen = false;
                         //closing voice
             		}
@@ -223,11 +231,11 @@ public class EVSystem implements Runnable{
             	if(movetic % 100 == 0) {//arrive floor
             		int num = movetic /100;
             		//destination of elev or there is passenger in arrive floor
+            		this.elevator.nowFloor = num + 1;
             		if(this.elevator.btnstate[num] == true || this.floors.get(num).buttonState.isContain(this.elevator.stateUpDown)) {
-            			stoptic = 0;
+                        openningREQ = true;
             			this.elevator.stateMove = StateMove.STOP;
             			this.elevator.btnstate[num] = false;
-            			this.elevator.nowFloor = num + 1;
             			if(num == 6)
             				this.elevator.stateUpDown = StateUpDown.DOWN;
             			else if(num == 0)
@@ -242,9 +250,9 @@ public class EVSystem implements Runnable{
             	if(0<= n && n <=6)
             		this.elevator.btnstate[n] = true;
             	else if(n == 7 && this.elevator.stateMove == StateMove.STOP)//open
-            		stoptic = 0;
+            		openningREQ = true;
             	else if(n == 8 && this.elevator.stateMove == StateMove.STOP)//close
-            		stoptic = 70;
+            		stoptic = (stoptic < 70 )? 70 : stoptic;
             		
             }
             if(btn != -1){
@@ -289,7 +297,7 @@ public class EVSystem implements Runnable{
             this.setLed(data);
 
 		try { Thread.sleep(100); } catch (InterruptedException e) { e.printStackTrace(); }
-//0.1 sec
+
         }
         closeDevice();
     }
