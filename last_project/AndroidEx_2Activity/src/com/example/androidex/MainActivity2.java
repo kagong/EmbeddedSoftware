@@ -500,7 +500,7 @@ public class MainActivity2 extends Activity{
 					if(DEBUG == true)
 						System.out.println("stop");
 					if(this.elevator.stateStop == StateStop.OPEN) {
-						stoptic = (stoptic + 1 > 80)? stoptic : stoptic + 1;
+						stoptic = (stoptic + 2 > 80)? 80 : stoptic + 2;
 						if(stoptic >= 80) {//closing
 							if(this.isIdle() == true){
 								this.elevator.stateStop = StateStop.IDLE;
@@ -554,9 +554,9 @@ public class MainActivity2 extends Activity{
 					if(DEBUG == true)
 						System.out.println("move");
 					if(this.elevator.stateUpDown == StateUpDown.UP) 
-						movetic = (movetic + 1 > 600) ? movetic : movetic + 1;
+						movetic = (movetic + 2 > 600) ? 600 : movetic + 2;
 					else if(this.elevator.stateUpDown == StateUpDown.DOWN) 
-						movetic = (movetic - 1 < 0) ? movetic : movetic - 1;
+						movetic = (movetic - 2 < 0) ? 0 : movetic - 2;
 
 					if(movetic % 100 == 0) {//arrive floor
 						if(DEBUG == true)
