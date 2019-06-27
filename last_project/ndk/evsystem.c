@@ -1,7 +1,6 @@
 #include "EVSystem.h"
 #include <syscall.h>
 
-<<<<<<< HEAD
 #define GETSWI_MODE 0
 #define GETINTR_MODE 1
 #define SETLED_MODE 3
