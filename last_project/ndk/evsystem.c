@@ -16,7 +16,7 @@
 
 JNIEXPORT jint JNICALL Java_EVSystem_getSwitch (JNIEnv *env, jobject obj, jint dev){
     int retval;
-	int flag = 1, dev, i, qq = 0;
+	int flag = 1,  i, qq = 0;
 	unsigned char push_sw_buff[9];
 
     /*
@@ -25,7 +25,7 @@ JNIEXPORT jint JNICALL Java_EVSystem_getSwitch (JNIEnv *env, jobject obj, jint d
      */
 
 	int cdev;
-	cdev = (int dev);
+	cdev = dev;
 
 	while (qq < 10 && flag == 1){
 		read(cdev, &push_sw_buff, 9);
@@ -74,7 +74,7 @@ JNIEXPORT void JNICALL Java_EVSystem_setDot (JNIEnv *env, jobject obj, jint dev,
 	ioctl(cdev, SETDOT_MODE, cdata);
 }
 
-JNIEXPORT void JNICALL Java_EVSystem_setLed (JNIEnv *, jobject obj, jint dev, jint data){
+JNIEXPORT void JNICALL Java_EVSystem_setLed (JNIEnv *env, jobject obj, jint dev, jint data){
     /*
      * ioctl() <- data
      * data & 0x01 = 1st floor
@@ -96,13 +96,13 @@ JNIEXPORT void JNICALL Java_EVSystem_setBuzzer (JNIEnv *env, jobject obj, jint d
 
 	ioctl(cdev, SETBUZ_MODE, 0);
 }
-JNIEXPORT jint JNICALL Java_EVSystem_openDevice_1 (JNIEnv *env, jobject obj){
+JNIEXPORT jint JNICALL Java_EVSystem_openDevice_11 (JNIEnv *env, jobject obj){
 	int dev;
 	dev = open("/dev/elevator", O_RDWR);
 
 	return (jint)dev;
 }
-JNIEXPORT jint JNICALL Java_EVSystem_openDevice_2 (JNIEnv *env, jobject obj){
+JNIEXPORT jint JNICALL Java_EVSystem_openDevice_12 (JNIEnv *env, jobject obj){
 	int dev;
 	dev = open("/dev/fpga_push_switch", O_RDWR);
 
@@ -126,15 +126,15 @@ JNIEXPORT void JNICALL Java_EVSystem_closeDevice (JNIEnv *env, jobject obj, jint
  */
 JNIEXPORT jint JNICALL Java_EVSystem_callSyscall (JNIEnv *env, jobject obj, jint data1, jint data2, jintArray data3, jintArray data4){
     int retval;
-    jint *arr1 = (*env) - > GetIntArrayElements(env,data3,0);
-    jint *arr2 = (*env) - > GetIntArrayElements(env,data4,0);
+    jint *arr1 = (*env) -> GetIntArrayElements(env,data3,0);
+    jint *arr2 = (*env) -> GetIntArrayElements(env,data4,0);
     
 
     
     retval =  syscall(376, data1,data2,arr1,arr2);
     
-    (*env) -> ReleaseIntArrayElements(env,data1,arr1,0);
-    (*env) -> ReleaseIntArrayElements(env,data2,arr2,0);
+    (*env) -> ReleaseIntArrayElements(env,data3,arr1,0);
+    (*env) -> ReleaseIntArrayElements(env,data4,arr2,0);
     return retval;
 }
 

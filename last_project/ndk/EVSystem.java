@@ -180,11 +180,11 @@ public class EVSystem implements Runnable{
     public void calculTarget(){            
         int data1 = this.elevator.nowFloor;//start 1
         int data2 = this.elevator.stateUpDown.getValue();
-        int data3[] = new int[7];
-        int data4[] = new int[7];
-        for(int i= 0 ; i < 7 ;i++) {
-            data3[i] = this.floors.get(i).buttonState.getValue();
-            data4[i] = (this.elevator.btnstate[i] == true)? 1: 0;
+        int data3[] = new int[8];
+        int data4[] = new int[8];
+        for(int i= 1 ; i < 8 ;i++) {
+            data3[i] = this.floors.get(i-1).buttonState.getValue();
+            data4[i] = (this.elevator.btnstate[i-1] == true)? 1: 0;
         }
         this.target_floor = callSyscall(data1,data2,data3,data4);
         if(this.target_floor > this.elevator.nowFloor)
