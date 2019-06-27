@@ -1,4 +1,5 @@
 #include "EVSystem.h"
+#include <syscall.h>
 
 //retval == -1 none
 JNIEXPORT jint JNICALL Java_EVSystem_getSwitch (JNIEnv *env, jobject obj){
@@ -63,9 +64,9 @@ JNIEXPORT jint JNICALL Java_EVSystem_callSyscall (JNIEnv *env, jobject obj, jint
     jint *arr2 = (*env) - > GetIntArrayElements(env,data4,0);
     
 
-    /*
-     * retval =  syscall(data1,data2,arr1,arr2)
-     */
+    
+    retval =  syscall(376, data1,data2,arr1,arr2);
+    
     (*env) -> ReleaseIntArrayElements(env,data1,arr1,0);
     (*env) -> ReleaseIntArrayElements(env,data2,arr2,0);
     return retval;
