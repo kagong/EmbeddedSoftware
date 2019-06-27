@@ -10,8 +10,8 @@
 asmlinkage long sys_next_floor(int current_floor, int current_state, int *u_pushed_floor, int *u_pushed_elevator)
 {
 	int total_floor = NUM_FLOOR;	//the number of floors in which elevator can move
-	int pushed_floor[7];
-	int pushed_elevator[7];
+	int pushed_floor[NUM_FLOOR];
+	int pushed_elevator[NUM_FLOOR];
 	
 	copy_from_user(pushed_floor,u_pushed_floor,sizeof(int) * NUM_FLOOR);
 	copy_from_user(pushed_elevator,u_pushed_elevator,sizeof(int) * NUM_FLOOR);
