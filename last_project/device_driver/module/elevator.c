@@ -32,7 +32,7 @@
 #define GETINTR_MODE 1
 #define SETLED_MODE 3
 #define SETDOT_MODE 4
-#define SETBUZZER_MODE 5
+#define SETBUZ_MODE 5
 
 #define ELEV_UP 1
 #define ELEV_DOWN 3
@@ -82,14 +82,11 @@ void callback_handler(unsigned long arg);
 
 #define IOM_LED_ADDRESS 0x08000016
 #define IOM_DOT_ADDRESS 0x08000210
-#define IOM_BUZZER_ADDRESS 0x04000020
+#define IOM_BUZ_ADDRESS 0x08000070
 
 static unsigned char *iom_led_addr;
 static unsigned char *iom_dot_addr;
-static unsigned char *iom_buzzer_addr;
-
-#define BUZON 0x00
-#define BUZOFF 0x01
+static unsigned char *iom_buz_addr;
 
 
 
@@ -129,6 +126,9 @@ static long inter_ioctl(struct file *filep, unsigned int ioctl_num, unsigned lon
 	char decode_data;
 	int i;
 
+	unsigned short int s_val;
+	unsigned char val;
+
 	switch(ioctl_num){
 		case GETSWITCH_MODE:
 			break;
@@ -160,6 +160,21 @@ static long inter_ioctl(struct file *filep, unsigned int ioctl_num, unsigned lon
 		case SETDOT_MODE:
 			decode_data = ((char*)ioctl_param)[3];
 			calculate_dot(decode_data);
+			break;
+		
+		case SETBUZ_MODE:
+			val = 1;
+			s_val = val & 0xF;
+			outw(s_val, (unsigned int)iom_buz_addr);
+
+			printk(KERN_ALERT "hihi\n");
+
+			for (i = 0 ; i < 100 ; i++)
+				mdelay(5);
+
+			val = 2;
+			s_val = val & 0xF;
+			outw(s_val, (unsigned int)iom_buz_addr);
 			break;
 	}
 
@@ -393,6 +408,7 @@ static int __init inter_init(void) {
 	// **** Mapping fnd device **** //
 	iom_led_addr = ioremap(IOM_LED_ADDRESS, 0x1);
 	iom_dot_addr = ioremap(IOM_DOT_ADDRESS, 0x10);
+	iom_buz_addr = ioremap(IOM_BUZ_ADDRESS, 0x1);
 
 	printk(KERN_ALERT "Init Module Success \n");
 	printk(KERN_ALERT "Device : /dev/elevator, Major Num : 242 \n");
@@ -406,6 +422,7 @@ static void __exit inter_exit(void) {
 	// **** Unmap fnd device **** //
 	iounmap(iom_led_addr);
 	iounmap(iom_dot_addr);
+	iounmap(iom_buz_addr);
 
 	printk(KERN_ALERT "Remove Module Success \n");
 }
