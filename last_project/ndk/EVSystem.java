@@ -56,6 +56,9 @@ public class EVSystem implements Runnable{
     native void setDot(int flag);
     native void setLed(int data);
     native int callSyscall(int data1,int data2,int data3,int data4);
+    native void openDevice();
+    native void closeDevice();
+
     static {
         System.loadLibrary("EVSystem");
     };    
@@ -151,6 +154,7 @@ public class EVSystem implements Runnable{
         int stoptic=0,movetic=0,data;
         Random rnd = new Random();
         this.running = true;
+        openDevice();
         while(running){
             int n;
             int btn
@@ -266,6 +270,7 @@ public class EVSystem implements Runnable{
 
             Thread.sleep(100);//0.1 sec
         }
+        closeDevice();
     }
     public void stop(){
         this.running = false;
