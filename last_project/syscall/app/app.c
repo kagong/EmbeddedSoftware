@@ -18,8 +18,8 @@ int main(void)
 {
     int current_floor;
     int current_state;
-    int elevators[7];
-    int floors[7]; 
+    int elevators[8];
+    int floors[8]; 
     int i;
 
     printf("Current Floor :");
@@ -28,11 +28,11 @@ int main(void)
     scanf("%d",&current_state);
     
     printf("Pushed Floors(0 = none, 1 = up, 3 = down) :");
-    for(i=0;i<7;i++){
+    for(i=1;i<=7;i++){
         scanf("%d",&floors[i]);
     }
     printf("Pushed Elevators(0 = none, 1 = pushed) :");
-    for(i=0;i<7;i++){
+    for(i=1;i<=7;i++){
         scanf("%d",&elevators[i]);
     }
     int retval = syscall(376,current_floor, current_state, floors, elevators);
