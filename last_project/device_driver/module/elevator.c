@@ -28,22 +28,14 @@
 #define TRUE 1
 #define FALSE 0
 
-#define INPUT_MODE 0
-#define OUTPUT_MODE 1
-
+#define GETSWITCH_MODE 0
+#define GETINTR_MODE 1
+#define SETLED_MODE 3
+#define SETDOT_MODE 4
+#define SETBUZ_MODE 5
 
 #define ELEV_UP 1
 #define ELEV_DOWN 3
-
-#define DOT_PRINT_INTERVAL HZ * 1
-
-
-#define IOM_LED_ADDRESS 0x08000016
-#define IOM_DOT_ADDRESS 0x08000210
-
-static unsigned char *iom_led_addr;
-static unsigned char *iom_dot_addr;
-
 
 
 // **** For dev driver **** //
@@ -69,7 +61,7 @@ static struct file_operations inter_fops =
 
 // **** For output **** //
 void init_output(void);
-void print_start(const char *buf);
+//void print_start(const char *buf);
 void print_led(char data);
 void calculate_dot(char data);
 void print_dot(int data);
@@ -85,6 +77,18 @@ static struct timer_data my_timer;
 void callback_handler(unsigned long arg);
 
 
+#define DOT_PRINT_INTERVAL HZ * 1
+
+
+#define IOM_LED_ADDRESS 0x08000016
+#define IOM_DOT_ADDRESS 0x08000210
+#define IOM_BUZ_ADDRESS 0x08000070
+
+static unsigned char *iom_led_addr;
+static unsigned char *iom_dot_addr;
+static unsigned char *iom_buz_addr;
+
+
 
 // **** For input **** //
 irqreturn_t inter_handler_back(int irq, void* dev_id, struct pt_regs* reg);
@@ -94,9 +98,6 @@ irqreturn_t inter_handler_voldown(int irq, void* dev_id, struct pt_regs* reg);
 static int volup_pressed;
 static int voldown_pressed;
 static int back_pressed;
-
-
-
 
 // **** Input **** //
 irqreturn_t inter_handler_back(int irq, void* dev_id, struct pt_regs* reg) {
@@ -119,37 +120,61 @@ irqreturn_t inter_handler_voldown(int irq, void* dev_id, struct pt_regs* reg) {
 
  	return IRQ_HANDLED;
 }
-
-
-
-
-
-
 // **** Control **** //
 static long inter_ioctl(struct file *filep, unsigned int ioctl_num, unsigned long ioctl_param){
 	long res = -1;	
-	
+	char decode_data;
+	int i;
+
+	unsigned short int s_val;
+	unsigned char val;
+
 	switch(ioctl_num){
-		case INPUT_MODE:
-			res = 0;
+		case GETSWITCH_MODE:
+			break;
+		case GETINTR_MODE:
+			res = -1;
 			if (volup_pressed != 0){
-				res = res | volup_pressed;
+				res = 0;
 				volup_pressed = 0;
 			}
 
 			if (voldown_pressed != 0){
-				res = res << 8;
-				res = res | voldown_pressed;
+//				res = res << 8;
+//				res = res | voldown_pressed;
+				res = 1;
 				voldown_pressed = 0;
 			}
 			if (back_pressed != 0){
-				res = res << 8;
-				res = res | back_pressed;
+//				res = res << 8;
+//				res = res | back_pressed;
+				res = 2;
 				back_pressed = 0;
 			}		
 			break;
-		case OUTPUT_MODE:
-			print_start((char*)ioctl_param);
+		case SETLED_MODE:
+			decode_data = ((char*)ioctl_param)[0];
+			print_led(decode_data);
+
+			break;
+		case SETDOT_MODE:
+			decode_data = ((char*)ioctl_param)[3];
+			calculate_dot(decode_data);
+			break;
+		
+		case SETBUZ_MODE:
+			val = 1;
+			s_val = val & 0xF;
+			outw(s_val, (unsigned int)iom_buz_addr);
+
+			printk(KERN_ALERT "hihi\n");
+
+			for (i = 0 ; i < 100 ; i++)
+				mdelay(5);
+
+			val = 2;
+			s_val = val & 0xF;
+			outw(s_val, (unsigned int)iom_buz_addr);
 			break;
 	}
 
@@ -171,16 +196,6 @@ void init_output(void){
 		s_value = 0x00;
 		outw(s_value, (unsigned int)iom_dot_addr + i*2);
 	}
-}
-
-void print_start(const char* param){
-	char updown, floor;
-
-	updown = param[3];
-	floor = param[0];
-
-	print_led(floor);
-	calculate_dot(updown);
 }
 
 void print_led(char data){
@@ -304,13 +319,14 @@ static int inter_open(struct inode *minode, struct file *mfile){
 		my_timer.set = FALSE;
 	}
 
+	/* input init */
 	my_timer.set = FALSE;
 	volup_pressed = 0;
 	voldown_pressed = 0;
 	back_pressed = 0;
 
 	printk(KERN_ALERT "Open Module\n");
-
+	
 	// interrupt back button
 	gpio_direction_input(IMX_GPIO_NR(1,12));
 	irq = gpio_to_irq(IMX_GPIO_NR(1,12));
@@ -332,8 +348,6 @@ static int inter_open(struct inode *minode, struct file *mfile){
 
 
 	init_output();
-
-
 	init_timer(&my_timer.timer);
 
 	inter_usage = 1;
@@ -394,7 +408,7 @@ static int __init inter_init(void) {
 	// **** Mapping fnd device **** //
 	iom_led_addr = ioremap(IOM_LED_ADDRESS, 0x1);
 	iom_dot_addr = ioremap(IOM_DOT_ADDRESS, 0x10);
-
+	iom_buz_addr = ioremap(IOM_BUZ_ADDRESS, 0x1);
 
 	printk(KERN_ALERT "Init Module Success \n");
 	printk(KERN_ALERT "Device : /dev/elevator, Major Num : 242 \n");
@@ -408,6 +422,7 @@ static void __exit inter_exit(void) {
 	// **** Unmap fnd device **** //
 	iounmap(iom_led_addr);
 	iounmap(iom_dot_addr);
+	iounmap(iom_buz_addr);
 
 	printk(KERN_ALERT "Remove Module Success \n");
 }
