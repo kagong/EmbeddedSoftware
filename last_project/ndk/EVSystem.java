@@ -300,6 +300,9 @@ public class EVSystem implements Runnable{
             }
             n = getSwitch(dev_2);
             btn = getIntrBtn(dev_1);
+            if(DEBUG == true && (n != -1 || btn != -1) )
+			System.out.println(String.format("switch : %d  btn : %d\n",n,btn));
+		
             if(n != -1) {
                 if(0<= n && n <=6)
                     this.elevator.btnstate[n] = true;
