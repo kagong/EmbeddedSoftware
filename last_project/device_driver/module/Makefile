@@ -8,7 +8,7 @@ driver:
 
 clean :
 	rm -rf *.o
-	rm -rf *.ko
+	rm -rf elevator.ko
 	rm -rf *.mod.c
 	rm -rf *.order
 	rm -rf *.symvers

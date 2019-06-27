@@ -6,7 +6,7 @@
 //Compute Next floor
 //int current_floor 	: current floor where elevator exists
 //int current_state 	: current state of elevator (up = 1, down = 3, stop = 0)
-//int *u_pushed_floor 	: pushed buttons in each floor
+//int *u_pushed_floor 	: pushed buttons in each floor (up = 1, down = 2, updown = 3, none = 0)
 //int *u_pushed_elevator 	: pushed buttons inside elevator (up = 1, down = 3, none = 0)
 //If success, return Next floor which elevator must go to
 //If error return -1
@@ -29,11 +29,11 @@ asmlinkage long sys_next_floor(int current_floor, int current_state, int *u_push
 	}
     else if(current_state == 1){ //up
 		for(i = current_floor + 1; i < total_floor ; i++ ){
-			if(pushed_floor[i] == 1 || pushed_elevator[i])
+			if(pushed_floor[i] == 1 || pushed_floor[i] == 3 || pushed_elevator[i])
 				return i+1; // go i(th) floor (up -> up)
 		}
 		for(i = current_floor - 1; i >= 0; i--){
-			if(pushed_floor[i] == 3 || pushed_elevator[i])
+			if(pushed_floor[i] == 3 || pushed_floor[i] == 1 || pushed_elevator[i])
 				return i+1; // go i(th) floor (up -> down)
 		}
 		return current_floor; //(up -> stop)
