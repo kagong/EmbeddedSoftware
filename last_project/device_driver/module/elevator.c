@@ -102,22 +102,22 @@ static int back_pressed;
 // **** Input **** //
 irqreturn_t inter_handler_back(int irq, void* dev_id, struct pt_regs* reg) {
     printk(KERN_ALERT "interrupt2!!! = %x\n", gpio_get_value(IMX_GPIO_NR(1, 12)));
-	volup_pressed += 1;
 
+	back_pressed += 1;
     return IRQ_HANDLED;
 }
 
 irqreturn_t inter_handler_volup(int irq, void* dev_id,struct pt_regs* reg) {
     printk(KERN_ALERT "interrupt3!!! = %x\n", gpio_get_value(IMX_GPIO_NR(2, 15)));
-	voldown_pressed += 1;
 
+	volup_pressed += 1;
     return IRQ_HANDLED;
 }
 
 irqreturn_t inter_handler_voldown(int irq, void* dev_id, struct pt_regs* reg) {
 	printk(KERN_ALERT "interrupt4!!! = %x\n", gpio_get_value(IMX_GPIO_NR(5, 14)));
-	back_pressed += 1;
 
+	voldown_pressed += 1;
  	return IRQ_HANDLED;
 }
 // **** Control **** //
@@ -128,6 +128,7 @@ static long inter_ioctl(struct file *filep, unsigned int ioctl_num, unsigned lon
 
 	unsigned short int s_val;
 	unsigned char val;
+
 
 	switch(ioctl_num){
 		case GETSWITCH_MODE:
@@ -167,7 +168,6 @@ static long inter_ioctl(struct file *filep, unsigned int ioctl_num, unsigned lon
 			s_val = val & 0xF;
 			outw(s_val, (unsigned int)iom_buz_addr);
 
-			printk(KERN_ALERT "hihi\n");
 
 			for (i = 0 ; i < 100 ; i++)
 				mdelay(5);
@@ -206,16 +206,17 @@ void print_led(char data){
 }
 
 
-
 void calculate_dot(char data){
 
 	static int start_elevator = FALSE;
 
 	switch(data){
 		case 0:									// stop elevator
+
+            printk(KERN_ALERT "pp %d %d\n", start_elevator, my_timer.status);
 			start_elevator = FALSE;
 			del_timer_sync(&my_timer.timer);
-
+            
 			init_output();
 
 			my_timer.set = FALSE;
@@ -224,7 +225,9 @@ void calculate_dot(char data){
 
 		case ELEV_UP:									// going up
 			if ((start_elevator == TRUE && my_timer.status == ELEV_DOWN) || start_elevator == FALSE){	// elevator down to up
-				
+	
+                printk(KERN_ALERT "ww %d %d\n", start_elevator, my_timer.status);
+                start_elevator = TRUE;
 				if (my_timer.set == TRUE)
 					del_timer_sync(&my_timer.timer);
 
@@ -248,7 +251,9 @@ void calculate_dot(char data){
 
 		case ELEV_DOWN:									// going down
 			if ((start_elevator == TRUE && my_timer.status == ELEV_UP) || start_elevator == FALSE){		// elevator up to down
-				
+                printk(KERN_ALERT "ww %d %d\n", start_elevator, my_timer.status);
+
+                start_elevator = TRUE;
 				if (my_timer.set == TRUE)
 					del_timer_sync(&my_timer.timer);
 
@@ -286,9 +291,11 @@ void print_dot(int data){
 void callback_handler(unsigned long arg){
 	struct timer_data *tmp_timer;
 	tmp_timer = (struct timer_data *)arg;
-
+    printk(KERN_ALERT "%d\n",tmp_timer->pos);
 	if (tmp_timer->pos == 1)		tmp_timer->pos = 0;
 	else if (tmp_timer->pos == 0) 	tmp_timer->pos = 1;
+
+
 
 
 	print_dot(tmp_timer->status + tmp_timer->pos);
