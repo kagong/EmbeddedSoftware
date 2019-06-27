@@ -26,7 +26,6 @@ asmlinkage long sys_next_floor(int current_floor, int current_state, int *u_push
 			if(pushed_floor[i] || pushed_elevator[i])
 				return i+1; // go i(th) floor
 		}
-        return current_floor;
 	}
     else if(current_state == 1){ //up
 		for(i = current_floor + 1; i < total_floor ; i++ ){
@@ -50,4 +49,6 @@ asmlinkage long sys_next_floor(int current_floor, int current_state, int *u_push
 		}
 		return current_floor; //(down -> stop)
 	}
+
+    return current_floor;
 }
