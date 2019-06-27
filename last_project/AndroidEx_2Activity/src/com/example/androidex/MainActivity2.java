@@ -13,13 +13,12 @@ import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.LinearLayout;
+
 
 
 public class MainActivity2 extends Activity{
 	public MusicService mService;
-	public Button test_btn1;
-	public Button test_btn2;
-	public int a = 0;
 	
 	ServiceConnection sconn = new ServiceConnection(){
         @Override //Call when service start
@@ -40,26 +39,12 @@ public class MainActivity2 extends Activity{
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main2);
-		test_btn1 = (Button)findViewById(R.id.button1);
-		test_btn2 = (Button)findViewById(R.id.button2);
 		//Start Timer Service
 		Intent intent = new Intent(MainActivity2.this,MusicService.class);
 		bindService(intent, sconn,Context.BIND_AUTO_CREATE);
-		
-		OnClickListener ltn1=new OnClickListener(){
-			public void onClick(View v){
-				mService.PlayMusic(MusicService.MusicType.DOOR_OPENING);
-			};
-		};
-		test_btn1.setOnClickListener(ltn1);
+
 		
 
-		OnClickListener ltn2=new OnClickListener(){
-			public void onClick(View v){
-				mService.PlayMusic(MusicService.MusicType.DOOR_CLOSING);
-			};
-		};
-		test_btn2.setOnClickListener(ltn2);
 	};
 	
 
