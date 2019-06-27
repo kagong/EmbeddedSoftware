@@ -17,10 +17,11 @@ enum StateUpDown{
 	}
 	// updown -> up (temp = down),updown -> down (temp = up)
 	// up -> NONE (temp = up)
-	public void release(StateUpDown temp) {
+	public StateUpDown release(StateUpDown temp) {
 		if(this.value == 3 || temp.value == this.value) {
-			this.value -= temp.value;
+			//return new StateUpDown(this.value - temp.value);
 		}
+		return this;
 	}
 }
 enum StateMove{
@@ -55,7 +56,9 @@ public class EVSystem implements Runnable{
     native int getIntrBtn();
     native void setDot(int flag);
     native void setLed(int data);
-    native int callSyscall(int data1,int data2,int data3,int data4);
+    native void setBuzzer();
+
+    native int callSyscall(int data1,int data2,int[] data3,int[] data4);
     native void openDevice();
     native void closeDevice();
 
@@ -145,7 +148,6 @@ public class EVSystem implements Runnable{
             this.floors.add(floor);
         }
         this.elevator = new Elevator();
-        this.tic = 0;
     }
     public Floor getFloor(int i){//0�겫占쏙옙苑� 占쎈뻻占쎌삂
         return this.floors.get(i);
@@ -157,7 +159,7 @@ public class EVSystem implements Runnable{
         openDevice();
         while(running){
             int n;
-            int btn
+            int btn;
             if(this.elevator.stateMove == StateMove.STOP) {
             	
             	boolean flag = false;
@@ -166,31 +168,35 @@ public class EVSystem implements Runnable{
                 		flag = true;
                 }
                 if(flag) {
-                	this.stoptic += 1;
-            		if(this.stoptic >= 80) {//8sec
-            			this.stoptic = 0;
+                	stoptic += 1;
+            		if(stoptic >= 80) {//8sec
+            			stoptic = 0;
             			this.elevator.stateMove = StateMove.MOVE;
-               
+//call syscall               
             		}
             		else{
             			Floor temp = this.floors.get(this.elevator.nowFloor-1);
-            			int flag2 =false;
+            			boolean flag2 =false;
             			for(int i=0 ; i < temp.people.size();++i) {
             				if( temp.people.get(i).state == this.elevator.stateUpDown) {
             					if(this.elevator.addPerson()) {
             						flag = true;
                 					temp.people.remove(i); 
             					}
-            					else
+            					else{
                 					flag = false;	
+							setBuzzer();//1sec ring
+						}
             				}
             			}
-            			if(flag)
-        					temp.buttonState.release(this.elevator.stateUpDown);
+            			//if(flag)
+        			//		temp.buttonState = temp.buttonState.release(this.elevator.stateUpDown);
+				
             		}
+			
                 }
                 else
-                	this.stoptic = 0;
+                	stoptic = 0;
             	
             }
             else {//move 10sec
@@ -199,11 +205,11 @@ public class EVSystem implements Runnable{
         		else if(this.elevator.stateUpDown == StateUpDown.DOWN) 
                 	movetic = (movetic - 1 < 0) ? movetic : movetic - 1;
 
-            	if(this.movetic % 100 == 0) {//arrive floor
-            		int num = this.movetic /100;
+            	if(movetic % 100 == 0) {//arrive floor
+            		int num = movetic /100;
             		//destination of elev or there is passenger in arrive floor
             		if(this.elevator.btnstate[num] == true || this.floors.get(num).buttonState.isContain(this.elevator.stateUpDown)) {
-            			this.stoptic = 0;
+            			stoptic = 0;
             			this.elevator.stateMove = StateMove.STOP;
             			this.elevator.btnstate[num] = false;
             			this.elevator.nowFloor = num + 1;
@@ -227,7 +233,7 @@ public class EVSystem implements Runnable{
             		
             }
             if(btn != -1){
-            	else if(btn == IntrBtn.VOLUP.getValue()){
+            	if(btn == IntrBtn.VOLUP.getValue()){
                 	int floorNum = rnd.nextInt(6);
                 	this.floors.get(floorNum).addPerson(StateUpDown.UP);
             	}
@@ -245,12 +251,12 @@ public class EVSystem implements Runnable{
             StateUpDown UpDown = elevator.stateUpDown;
 
             int data1 = this.elevator.nowFloor;//start 1
-            int data2 = this.elevator.stateUpDown;
-            int data3[] = new data[7];
-            int data4[] = new data[7];
+            int data2 = this.elevator.stateUpDown.getValue();
+            int data3[] = new int[7];
+            int data4[] = new int[7];
             for(int i= 0 ; i < 7 ;i++) {
             	data3[i] = this.floors.get(i).buttonState.getValue();
-            	data4[i] = (this.elevator.btnstate[i] == true) 1: 0;
+            	data4[i] = (this.elevator.btnstate[i] == true)? 1: 0;
             }
 
             if(this.elevator.stateMove == StateMove.MOVE)
@@ -262,13 +268,13 @@ public class EVSystem implements Runnable{
                 this.setDot(1);
             if(UpDown !=elevator.stateUpDown && UpDown == StateUpDown.DOWN)
                 this.setDot(2);
-            int data;
             data = 0;
             for(int i = 0 ; i < 7 ; i++) 
             	data += ((this.elevator.btnstate[i] == true)? 1: 0) << i;
             this.setLed(data);
 
-            Thread.sleep(100);//0.1 sec
+		try { Thread.sleep(100); } catch (InterruptedException e) { e.printStackTrace(); }
+//0.1 sec
         }
         closeDevice();
     }
