@@ -423,7 +423,7 @@ public class MainActivity2 extends Activity{
 				return true;
 			}
 			public void evitPerson(){
-				if(this.stateMove == StateMove.STOP){
+				if(this.stateMove == StateMove.STOP && this.personNum > 0){
 					this.personNum-=1;
 				}
 			}
@@ -504,40 +504,36 @@ public class MainActivity2 extends Activity{
 				n = -1;
 				btn = -1;
 				if(this.elevator.stateMove == StateMove.STOP) {
-					if(DEBUG == true)
-						System.out.println("stop");
+					
 					if(this.elevator.stateStop == StateStop.OPEN) {
 						stoptic = (stoptic + 2 > 80)? 80 : stoptic + 2;
 						if(stoptic >= 80) {//closing
-							if(this.isIdle() == true){
-								this.elevator.stateStop = StateStop.IDLE;
-								this.elevator.stateUpDown = StateUpDown.NONE;
-							}
-							else{
-								this.elevator.stateMove = StateMove.MOVE;
-								this.calculTarget();
-							}
+							
+							this.elevator.stateMove = StateMove.MOVE;
+							this.calculTarget();
 							ndk_open_flag = 0;
 							//mService.PlayMusic(MusicService.MusicType.DOOR_CLOSING);
 							//closing voice
 						}
 						else{//in open
 							Floor temp = floors.get(this.elevator.nowFloor-1);
-							boolean isFull = false;
+							boolean isNotFull = false;
 							for(int i=0 ; i < temp.people.size();++i) {
 								if(this.elevator.nowFloor == 1 || this.elevator.nowFloor == 7 || this.elevator.stateUpDown == StateUpDown.NONE ||temp.people.get(i).state == this.elevator.stateUpDown) {
 									if(this.elevator.addPerson()) {
-										isFull = true;
+										isNotFull = true;
 										temp.people.remove(i); 
+                                        i = 0;
 									}
 									else{
-										isFull = false;	
-										setBuzzer(dev_1);//1sec ring
+										isNotFull = false;	
 									}
 								}
 							}
-							if(isFull)
+							if(isNotFull)
 								temp.buttonState = StateUpDown.getState(temp.buttonState.getValue() - this.elevator.stateUpDown.getValue());
+                            else
+							    setBuzzer(dev_1);//1sec ring
 						}
 					}
 					else if(this.isOpenning() == true){
@@ -548,18 +544,18 @@ public class MainActivity2 extends Activity{
 						stoptic = 0;
 						this.elevator.stateStop = StateStop.OPEN;
 						this.elevator.btnstate[this.elevator.nowFloor-1] = false;
-						floors.get(this.elevator.nowFloor-1).buttonState = StateUpDown.NONE;//todo
+						floors.get(this.elevator.nowFloor-1).buttonState = StateUpDown.NONE;
+                        
 					}
 					else{
 						if(this.isIdle() == false){
 							this.elevator.stateMove = StateMove.MOVE;
+					        this.calculTarget();
 						}
 
 					}
 				}
 				else {//move 10sec
-					if(DEBUG == true)
-						System.out.println("move");
 					if(this.elevator.stateUpDown == StateUpDown.UP) 
 						movetic = (movetic + 2 > 600) ? 600 : movetic + 2;
 					else if(this.elevator.stateUpDown == StateUpDown.DOWN) 
@@ -571,29 +567,28 @@ public class MainActivity2 extends Activity{
 						int num = movetic /100;
 						//destination of elev or there is passenger in arrive floor
 						this.elevator.nowFloor = num + 1;
-						if(this.elevator.btnstate[num] == true || floors.get(num).buttonState.isContain(this.elevator.stateUpDown)) {
+						if(this.elevator.nowFloor == this.target_floor) {
 							if(DEBUG == true)
 								System.out.println("stopping");
 							this.openREQ = true;
 							this.elevator.stateMove = StateMove.STOP;
 							this.elevator.btnstate[num] = false;
-							if(num == 6)
-								this.elevator.stateUpDown = StateUpDown.DOWN;
-							else if(num == 0)
-								this.elevator.stateUpDown = StateUpDown.UP;
+					        this.calculTarget();
 						}
 					}
 
 				}
+
 				n = getSwitch(dev_2);
 				btn = getIntrBtn(dev_1);
 
 				if(n != -1) {
-					if(0<= n && n <=6)
+					if(0<= n && n <=6 && this.elevator.personNum > 0){
 						this.elevator.btnstate[n] = true;
+					    this.calculTarget();
+                    }
 					else if(n == 7 && this.elevator.stateMove == StateMove.STOP)//open
-					this.openREQ = true;
-
+					    this.openREQ = true;
 					else if(n == 8 && this.elevator.stateMove == StateMove.STOP)//close
 						stoptic = (stoptic < 70 )? 70 : stoptic;
 
@@ -602,39 +597,29 @@ public class MainActivity2 extends Activity{
 					if(btn == IntrBtn.VOLUP.getValue()){//down
 						int floorNum = rnd.nextInt(6);
 						floors.get(floorNum).addPerson(StateUpDown.UP);
-						if(DEBUG == true){
-							System.out.println("upperson2");
-							System.out.println(floorNum);
-						}
+					    this.calculTarget();
 					}
 					else if(btn == IntrBtn.VOLDOWN.getValue()){//back
 						int floorNum = rnd.nextInt(6)+1;
 						floors.get(floorNum).addPerson(StateUpDown.DOWN);
-						if(DEBUG == true){
-							System.out.println("downperson2");
-							System.out.println(floorNum);
-						}
+					    this.calculTarget();
 					}
 					else if(btn == IntrBtn.BACK.getValue()){//up
 						this.elevator.evitPerson();
-						if(DEBUG == true){
-							System.out.println("back");
-
-						}
 					}
 				}
 
 				//callSyscall data;
 
 
-				if(this.elevator.stateMove == StateMove.MOVE)
-					this.calculTarget();
+				
 				if(elevator.stateUpDown == StateUpDown.NONE)
 					this.setDot(dev_1,0);
 				if(elevator.stateUpDown== StateUpDown.UP)
 					this.setDot(dev_1,1);
 				if(elevator.stateUpDown == StateUpDown.DOWN)
 					this.setDot(dev_1,2);
+
 				data = 0;
 				for(int i = 0 ; i < 7 ; i++) 
 					data += ((this.elevator.btnstate[i] == true)? 1: 0) << i;
