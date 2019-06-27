@@ -10,75 +10,118 @@
 	    android:layout_width="match_parent"
 	    android:layout_height="match_parent"
 	    android:layout_weight="3"
-	    android:orientation="vertical"
-    	android:background="@drawable/border">
+	    android:background="@drawable/border"
+	    android:gravity="right"
+	    android:orientation="vertical" >
     	
     	<LinearLayout
-	    	android:id="@+id/floor7"
-    		android:layout_width="match_parent"
-    		android:layout_height="match_parent"
-    		android:orientation="horizontal" 
-    		android:layout_weight="1"
-			android:background="@drawable/border">
+    	    android:id="@+id/floor7"
+    	    android:layout_width="match_parent"
+    	    android:layout_height="match_parent"
+    	    android:layout_gravity="end"
+    	    android:layout_weight="1"
+    	    android:background="@drawable/border"
+    	    android:gravity="right"
+    	    android:orientation="horizontal"
+    	    android:paddingTop="10dp" >
+
 		</LinearLayout>
 		
 		<LinearLayout
-	    	android:id="@+id/floor6"
-    		android:layout_width="match_parent"
-    		android:layout_height="match_parent"
-    		android:orientation="horizontal" 
-    		android:layout_weight="1"
-    		android:background="@drawable/border">
+		    android:id="@+id/floor6"
+		    android:layout_width="match_parent"
+		    android:layout_height="match_parent"
+    	    android:layout_gravity="end"
+    	    android:layout_weight="1"
+    	    android:background="@drawable/border"
+    	    android:gravity="right"
+		    android:orientation="horizontal" 
+		    android:paddingTop="10dp" >
+
 		</LinearLayout>
+		
 		<LinearLayout
-	    	android:id="@+id/floor5"
-    		android:layout_width="match_parent"
-    		android:layout_height="match_parent"
-    		android:orientation="horizontal" 
-    		android:layout_weight="1"
-    		android:background="@drawable/border">
+		    android:id="@+id/floor5"
+		    android:layout_width="match_parent"
+		    android:layout_height="match_parent"
+    	    android:layout_gravity="end"
+    	    android:layout_weight="1"
+    	    android:background="@drawable/border"
+    	    android:gravity="right"
+		    android:orientation="horizontal" 
+		    android:paddingTop="10dp" >
+
 		</LinearLayout>
+
 		<LinearLayout
-	    	android:id="@+id/floor4"
-    		android:layout_width="match_parent"
-    		android:layout_height="match_parent"
-    		android:orientation="horizontal" 
-    		android:layout_weight="1"
-    		android:background="@drawable/border">
+		    android:id="@+id/floor4"
+		    android:layout_width="match_parent"
+		    android:layout_height="match_parent"
+    	    android:layout_gravity="end"
+    	    android:layout_weight="1"
+    	    android:background="@drawable/border"
+    	    android:gravity="right"
+		    android:orientation="horizontal" 
+		    android:paddingTop="10dp" >
+
 		</LinearLayout>
+
 		<LinearLayout
-	    	android:id="@+id/floor3"
-    		android:layout_width="match_parent"
-    		android:layout_height="match_parent"
-    		android:orientation="horizontal" 
-    		android:layout_weight="1"
-    		android:background="@drawable/border">
+		    android:id="@+id/floor3"
+		    android:layout_width="match_parent"
+		    android:layout_height="match_parent"
+    	    android:layout_gravity="end"
+    	    android:layout_weight="1"
+    	    android:background="@drawable/border"
+    	    android:gravity="right"
+		    android:orientation="horizontal" 
+		    android:paddingTop="10dp" >
+
 		</LinearLayout>
+
 		<LinearLayout
-	    	android:id="@+id/floor2"
-    		android:layout_width="match_parent"
-    		android:layout_height="match_parent"
-    		android:orientation="horizontal" 
-    		android:layout_weight="1"
-    		android:background="@drawable/border">
+		    android:id="@+id/floor2"
+		    android:layout_width="match_parent"
+		    android:layout_height="match_parent"
+    	    android:layout_gravity="end"
+    	    android:layout_weight="1"
+    	    android:background="@drawable/border"
+    	    android:gravity="right"
+		    android:orientation="horizontal"
+		    android:paddingTop="10dp" >
+
 		</LinearLayout>
+
 		<LinearLayout
-	    	android:id="@+id/floor1"
-    		android:layout_width="match_parent"
-    		android:layout_height="match_parent"
-    		android:orientation="horizontal" 
-    		android:layout_weight="1"
-    		android:background="@drawable/border">
+		    android:id="@+id/floor1"
+		    android:layout_width="match_parent"
+		    android:layout_height="match_parent"
+    	    android:layout_gravity="end"
+    	    android:layout_weight="1"
+    	    android:background="@drawable/border"
+    	    android:gravity="right"
+		    android:orientation="horizontal"
+		    android:paddingTop="10dp" >
+
 		</LinearLayout>
 	</LinearLayout>
 	    
 	<LinearLayout
 	    android:id="@+id/elevator_layout"
-    	android:layout_width="match_parent"
-    	android:layout_height="match_parent"
-    	android:orientation="vertical"
-    	android:layout_weight="7"
-    	android:background="@drawable/border">
+	    android:layout_width="match_parent"
+	    android:layout_height="match_parent"
+	    android:layout_weight="7"
+	    android:background="@drawable/border"
+	    android:orientation="vertical" >
+
+		<TextView
+		    android:id="@+id/elevator_tv"
+		    android:layout_width="match_parent"
+		    android:layout_height="65dp"
+		    android:background="@android:color/black"
+		  	android:layout_marginTop="434dp"
+		    android:text="TextView" />
+
 	></LinearLayout>
     
 </LinearLayout>

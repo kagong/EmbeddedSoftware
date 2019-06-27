@@ -12,12 +12,15 @@ public final class R {
     }
     public static final class drawable {
         public static final int border=0x7f020000;
-        public static final int ic_launcher=0x7f020001;
+        public static final int going_down=0x7f020001;
+        public static final int going_up=0x7f020002;
+        public static final int ic_launcher=0x7f020003;
     }
     public static final class id {
         public static final int TextView01=0x7f070001;
         public static final int container=0x7f070000;
         public static final int elevator_layout=0x7f07000c;
+        public static final int elevator_tv=0x7f07000d;
         public static final int floor1=0x7f07000b;
         public static final int floor2=0x7f07000a;
         public static final int floor3=0x7f070009;
