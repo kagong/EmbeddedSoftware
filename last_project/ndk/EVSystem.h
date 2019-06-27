@@ -41,10 +41,34 @@ JNIEXPORT void JNICALL Java_EVSystem_setLed
 
 /*
  * Class:     EVSystem
+ * Method:    setBuzzer
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_EVSystem_setBuzzer
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     EVSystem
  * Method:    callSyscall
- * Signature: ()I
+ * Signature: (II[I[I)I
  */
 JNIEXPORT jint JNICALL Java_EVSystem_callSyscall
+  (JNIEnv *, jobject, jint, jint, jintArray, jintArray);
+
+/*
+ * Class:     EVSystem
+ * Method:    openDevice
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_EVSystem_openDevice
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     EVSystem
+ * Method:    closeDevice
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_EVSystem_closeDevice
   (JNIEnv *, jobject);
 
 #ifdef __cplusplus
