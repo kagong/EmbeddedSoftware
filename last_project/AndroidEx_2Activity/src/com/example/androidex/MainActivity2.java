@@ -34,6 +34,8 @@ public class MainActivity2 extends Activity{
 	//StateUpDown buttonState; NONE(0),UP(1),DOWN(2),UPDOWN(3);	
 	//int floorNum;
 	ArrayList<EVSystem.Floor> Message_floors;
+	int Message_movetic;
+	
 	//Member Variable
 	//int personNum;
     //int nowFloor;
@@ -74,7 +76,7 @@ public class MainActivity2 extends Activity{
 		bindService(intent, sconn,Context.BIND_AUTO_CREATE);
 
 
-        //test_start();
+ //       test_start();
         
         
 		new Thread(new get_data()).start();
@@ -84,11 +86,12 @@ public class MainActivity2 extends Activity{
 		
 
 	private class get_data implements Runnable{
+		TextView Tv = (TextView)findViewById(R.id.elevator_tv);
+
 		
-		int[][] get_customer = new int[8][10];
-		int get_elevator_pos;
-		int get_dest_elevator;
-		
+		int get_elv_pos;
+		int state;
+		int open_flag = 1;
 		@Override
 		public void run(){
 			while(true){
@@ -99,44 +102,47 @@ public class MainActivity2 extends Activity{
 					e.printStackTrace();
 				}
 				
-				
-				/*
-				// get_customer input
-				
 				int flag = 1;
 				for (int i = 0 ; i < 8 ; i++){
 					for (int j = 0 ; j < 10 ; j++){
-						if (get_customer[i][j] != customer[i][j]){
+						if (Message_floors.get(i).people.get(j).state.getValue() != customer[i][j]){
 							flag = 0;
 						}
 					}
-				}
-				
+				}				
 				if (flag == 0){
 					for (int i = 0 ; i < 8 ; i++){
 						for (int j = 0 ; j < 10 ; j++){
-							customer[i][j] = get_customer[i][j];
+							customer[i][j] = Message_floors.get(i).people.get(j).state.getValue();
 						}
 					}
 					print_customer();
 				}
 				
 				
-				flag = 1;
+				int get_movtic = (600 - Message_movetic) * 434 / 600;
 				
-				//get_elevator_pos and get_dest_elevator input
-				
-				if ((get_elevator_pos != elevator_pos) || (get_dest_elevator != dest_elevator)){
-					
-					if (elevator_going_flag == false){
-						elevator_pos = get_elevator_pos;
-						dest_elevator = get_dest_elevator;
-						move_elevator();
+				final int finalI = get_movtic;
+				runOnUiThread(new Runnable(){
+					@Override
+					public void run(){
+						LinearLayout.LayoutParams mLayoutParams =
+								(LinearLayout.LayoutParams) Tv.getLayoutParams();
+						mLayoutParams.topMargin = finalI;
+						Tv.setLayoutParams(mLayoutParams);
 					}
+				});
+				
+				
+				if (Message_elevator.stateStop.getValue() == 0 && open_flag == 1){
+				    mService.PlayMusic(MusicService.MusicType.DOOR_OPENING);
+				    open_flag = 0;
 				}
-				*/
+				else if (Message_elevator.stateStop.getValue() == 1 && open_flag == 0){
+				    mService.PlayMusic(MusicService.MusicType.DOOR_CLOSING);
+				    open_flag = 1;
+				}
 			}
-	
 		}
 	}
 	
@@ -159,12 +165,8 @@ public class MainActivity2 extends Activity{
 	    elevator_pos = 1;
 	    dest_elevator = 5;
 	        
-	    print_customer();
-			
-	    move_elevator();	
-	    
-
-
+	    print_customer();			
+	//    move_elevator();	
 
 	}
 	protected void print_customer(){
@@ -198,10 +200,10 @@ public class MainActivity2 extends Activity{
 				
 
 				img.setLayoutParams(param);
-				if (customer[i][j] > 0){
+				if (customer[i][j] == 1){
 					img.setImageResource(R.drawable.going_up);
 				}
-				else if (customer[i][j] < 0){
+				else if (customer[i][j] == 2){
 					img.setImageResource(R.drawable.going_down);
 				}
 				img.setId(i*10 + j);
@@ -211,77 +213,12 @@ public class MainActivity2 extends Activity{
 		
 	}
 	
-	int howto;
 	
-	protected void move_elevator(){
-
-		if (dest_elevator > elevator_pos) howto = -1;			// going up
-		else if (dest_elevator < elevator_pos) howto = 1;		// going down
-		else howto = 0;
-		
-		
-		if (howto == 0) return;
-
-		new Thread(new moving_ele()).start();
-		
-		return;
-	}
 	
-	private class moving_ele implements Runnable{
-		TextView Tv = (TextView)findViewById(R.id.elevator_tv);
-		@Override
-		public void run(){
-			
-			int src = floor_margin[elevator_pos];
-			int dest = floor_margin[dest_elevator];
-	//		android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-			
-			elevator_going_flag = true;
-			
-			
-			for (int i = 0 ; i < (elevator_pos - dest_elevator) * howto * 9; i++){
-				
-				try {
-					Thread.sleep(111);
-					final int finalI = src + howto * i*8;
-					runOnUiThread(new Runnable(){
-						@Override
-						public void run(){
-							LinearLayout.LayoutParams mLayoutParams =
-									(LinearLayout.LayoutParams) Tv.getLayoutParams();
-							mLayoutParams.topMargin = finalI;
-							Tv.setLayoutParams(mLayoutParams);
-						}
-					});
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-			runOnUiThread(new Runnable(){
-				@Override
-				public void run(){
-					LinearLayout.LayoutParams mLayoutParams =
-							(LinearLayout.LayoutParams) Tv.getLayoutParams();
-					mLayoutParams.topMargin = floor_margin[dest_elevator];
-					Tv.setLayoutParams(mLayoutParams);
-				}
-			});
-			
-		    mService.PlayMusic(MusicService.MusicType.DOOR_OPENING);
-            Log.d("music", "muuuuuuuuuuu");
-			try {
-				Thread.sleep(5000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-			mService.PlayMusic(MusicService.MusicType.DOOR_CLOSING);
-			
-			elevator_going_flag = false;
-		}
-	}
+	
+	
+	
+	
 	
 	enum StateUpDown{
 	    NONE(0),UP(1),DOWN(2),UPDOWN(3);	
