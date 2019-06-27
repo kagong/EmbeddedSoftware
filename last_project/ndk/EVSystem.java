@@ -17,12 +17,18 @@ enum StateUpDown{
 	}
 	// updown -> up (temp = down),updown -> down (temp = up)
 	// up -> NONE (temp = up)
-	public StateUpDown release(StateUpDown temp) {
-		if(this.value == 3 || temp.value == this.value) {
-			//return new StateUpDown(this.value - temp.value);
-		}
-		return this;
-	}
+    public static StateUpDown getState(int val){
+        switch(val){
+            case 0:
+                return StateUpDown.NONE;
+            case 1:
+                return StateUpDown.UP;
+            case 2:
+                return StateUpDown.DOWN;
+            case 3:
+                return StateUpDown.UPDOWN;
+        }
+    }
 }
 enum StateMove{
 	MOVE(0),STOP(1);
@@ -180,17 +186,17 @@ public class EVSystem implements Runnable{
             			for(int i=0 ; i < temp.people.size();++i) {
             				if( temp.people.get(i).state == this.elevator.stateUpDown) {
             					if(this.elevator.addPerson()) {
-            						flag = true;
+            						flag2 = true;
                 					temp.people.remove(i); 
             					}
             					else{
-                					flag = false;	
-							setBuzzer();//1sec ring
-						}
-            				}
-            			}
-            			//if(flag)
-        			//		temp.buttonState = temp.buttonState.release(this.elevator.stateUpDown);
+                					flag2 = false;	
+							        setBuzzer();//1sec ring
+						        }
+            			    }
+            		    }
+            			if(flag2)
+                            temp.buttonState = StateUpDown.getState(temp.buttonsState.getValue() - this.elevator.stateUpDown);
 				
             		}
 			
