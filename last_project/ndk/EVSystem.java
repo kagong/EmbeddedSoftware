@@ -58,15 +58,15 @@ enum IntrBtn{
 public class EVSystem implements Runnable{
 
 
-    native int getSwitch();
-    native int getIntrBtn();
-    native void setDot(int flag);
-    native void setLed(int data);
-    native void setBuzzer();
+    //native int getSwitch(int dev_id);
+    //native int getIntrBtn(int dev_id);
+    //native void setDot(int dev_id,int flag);
+    //native void setLed(int dev_id,int data);
+    //native void setBuzzer(int dev_id);
 
-    native int callSyscall(int data1,int data2,int[] data3,int[] data4);
-    native void openDevice();
-    native void closeDevice();
+    //native int callSyscall(int data1,int data2,int[] data3,int[] data4);
+    //native int openDevice();
+    //native void closeDevice(int dev_id);
 
     static {
         System.loadLibrary("EVSystem");
@@ -163,10 +163,10 @@ public class EVSystem implements Runnable{
         boolean isOpen =false,openningREQ = false;
         Random rnd = new Random();
         this.running = true;
-        openDevice();
+        //openDevice();
         while(running){
-            int n;
-            int btn;
+            int n = -1;
+            int btn = -1;
             if(this.elevator.stateMove == StateMove.STOP) {
             	
             	boolean isIdle = true;
@@ -207,7 +207,7 @@ public class EVSystem implements Runnable{
             					}
             					else{
                 					flag2 = false;	
-							        setBuzzer();//1sec ring
+							       // setBuzzer();//1sec ring
 						        }
             			    }
             		    }
@@ -244,8 +244,8 @@ public class EVSystem implements Runnable{
             	}
             	
             }
-            n = getSwitch();
-            btn = getIntrBtn();
+            //n = getSwitch();
+            //btn = getIntrBtn();
             if(n != -1) {
             	if(0<= n && n <=6)
             		this.elevator.btnstate[n] = true;
@@ -282,24 +282,24 @@ public class EVSystem implements Runnable{
             	data4[i] = (this.elevator.btnstate[i] == true)? 1: 0;
             }
 
-            if(this.elevator.stateMove == StateMove.MOVE)
-            	UpDown = StateUpDown.values()[callSyscall(data1,data2,data3,data4)];
+            //if(this.elevator.stateMove == StateMove.MOVE)
+            //	UpDown = StateUpDown.values()[callSyscall(data1,data2,data3,data4)];
             
-            if(UpDown !=elevator.stateUpDown && UpDown == StateUpDown.NONE)
-                this.setDot(0);
-            if(UpDown !=elevator.stateUpDown && UpDown == StateUpDown.UP)
-                this.setDot(1);
-            if(UpDown !=elevator.stateUpDown && UpDown == StateUpDown.DOWN)
-                this.setDot(2);
+            //if(UpDown !=elevator.stateUpDown && UpDown == StateUpDown.NONE)
+              //  this.setDot(0);
+            //if(UpDown !=elevator.stateUpDown && UpDown == StateUpDown.UP)
+              //  this.setDot(1);
+            //if(UpDown !=elevator.stateUpDown && UpDown == StateUpDown.DOWN)
+              //  this.setDot(2);
             data = 0;
             for(int i = 0 ; i < 7 ; i++) 
             	data += ((this.elevator.btnstate[i] == true)? 1: 0) << i;
-            this.setLed(data);
+            //this.setLed(data);
 
 		try { Thread.sleep(100); } catch (InterruptedException e) { e.printStackTrace(); }
 
         }
-        closeDevice();
+        //closeDevice();
     }
     public void stop(){
         this.running = false;
@@ -308,7 +308,7 @@ public class EVSystem implements Runnable{
         EVSystem temp = new EVSystem();
         temp.run();
         for(int i = 0; i < 7 ; i++){
-            System.out.println("%d floor %d person",i,);
+            System.out.println("%d floor",temp.floors.get(i).floorNum);
         }
 
     }
