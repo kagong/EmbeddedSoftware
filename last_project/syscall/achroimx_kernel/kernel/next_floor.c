@@ -31,14 +31,14 @@ asmlinkage long sys_next_floor(int current_floor, int current_state, int *u_push
 	}
     else if(current_state == 1){ //up
 		for(i = current_floor + 1; i <= total_floor ; i++ ){
-			if(pushed_floor[i] == 1 || pushed_elevator[i])
+			if(pushed_floor[i] == 1 || pushed_floor[i] == 3 || pushed_elevator[i])
 				return i; // go i(th) floor (up -> up)
 		}
 		for(i = total_floor;i>current_floor;i--)
-			if(pushed_floor[i] == 3)
+			if(pushed_floor[i] == 2)
 				return i;
 		for(i = current_floor - 1; i> 0 ;i--){
-			if(pushed_floor[i] == 3 || pushed_elevator[i])
+			if(pushed_floor[i] == 2 || pushed_floor[i] == 3 || pushed_elevator[i])
 				return i; 
 		}
 		for(i = 1 ; i< current_floor ; i++)
@@ -47,19 +47,19 @@ asmlinkage long sys_next_floor(int current_floor, int current_state, int *u_push
 	}
 	else{ //down
 		for(i = current_floor - 1; i > 0; i--){
-			if(pushed_floor[i] == 3|| pushed_elevator[i])
+			if(pushed_floor[i] == 2 || pushed_floor[i] == 3|| pushed_elevator[i])
 				return i; // go i(th) floor (down -> down)
 		}
-		for(i = 0 ;i < current_floor;i++)
+		for(i = 1 ;i < current_floor;i++)
 			if(pushed_floor[i] == 1)
 				return i;
 
 		for(i = current_floor + 1; i <= total_floor ; i++ ){
-			if(pushed_floor[i] == 1 || pushed_elevator[i])
+			if(pushed_floor[i] == 1 || pushed_floor[i] == 3 || pushed_elevator[i])
 				return i; // go i(th) floor (down -> up)
 		}
 		for(i = total_floor; i>current_floor;i--)
-			if(pushed_floor[i] == 3)
+			if(pushed_floor[i] == 2)
 				return i;
 	}
 

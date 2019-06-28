@@ -36,6 +36,7 @@ public class MainActivity2 extends Activity{
 	//ArrayList<EVSystem.Floor> Message_floors;
 	int movetic;
 
+	int personNum;
 	//Member Variable
 	//int personNum;
 	//int nowFloor;
@@ -103,7 +104,7 @@ public class MainActivity2 extends Activity{
 
 	private class get_data implements Runnable{
 		TextView Tv = (TextView)findViewById(R.id.elevator_tv);
-
+		
 
 		int get_elv_pos;
 		int state;
@@ -135,9 +136,9 @@ public class MainActivity2 extends Activity{
 						prev_length[i] = floors.get(i).people.size();				
 					}
 					
-					Log.d("size", "" + prev_length[i] + " and " + floors.get(i).people.size());
+					//Log.d("size", "" + prev_length[i] + " and " + floors.get(i).people.size());
 				}				
-				Log.d("pass", "next");
+				//Log.d("pass", "next");
 				
 				
 				if (flag == 0){
@@ -157,6 +158,7 @@ public class MainActivity2 extends Activity{
 				int get_movtic = (600 - movetic) * 434 / 600;
 
 				final int finalI = get_movtic;
+				final int finalP = personNum;
 				runOnUiThread(new Runnable(){
 					@Override
 					public void run(){
@@ -165,6 +167,7 @@ public class MainActivity2 extends Activity{
 								(LinearLayout.LayoutParams) Tv.getLayoutParams();
 						mLayoutParams.topMargin = finalI;
 						Tv.setLayoutParams(mLayoutParams);
+						Tv.setText("Number of Person : "+Integer.toString(finalP));
 					}
 				});
 
@@ -393,14 +396,13 @@ public class MainActivity2 extends Activity{
 			}
 		}
 		public class Elevator{
-			int personNum;
 			int nowFloor;
 			boolean btnstate[] = new boolean[7];
 			StateMove stateMove;
 			StateUpDown stateUpDown;
 			StateStop stateStop;
 			public Elevator(){
-				this.personNum = 0;
+				personNum = 0;
 				this.nowFloor = 1;
 				for(int i=0;i<7;i++)
 					btnstate[i] = false;
@@ -409,15 +411,15 @@ public class MainActivity2 extends Activity{
 				this.stateStop = StateStop.IDLE;
 			}
 			public boolean addPerson() {
-				if(this.personNum + 1 > 8) { //max number of person in elevator
-					this.personNum += 1;
-				return false;
+				if(personNum + 1 > 8) { //max number of person in elevator
+					return false;
 				}
+				personNum += 1;
 				return true;
 			}
 			public void evitPerson(){
-				if(this.stateMove == StateMove.STOP && this.personNum > 0){
-					this.personNum-=1;
+				if(this.stateMove == StateMove.STOP && personNum > 0){
+					personNum-=1;
 				}
 			}
 		}
@@ -450,6 +452,8 @@ public class MainActivity2 extends Activity{
 				data3[i] = floors.get(i-1).buttonState.getValue();
 				data4[i] = (this.elevator.btnstate[i-1] == true)? 1: 0;
 			}
+			System.out.println(String.format("F %d %d %d %d %d %d %d\n", data3[1],data3[2],data3[3],data3[4],data3[5],data3[6],data3[7]));
+			System.out.println(String.format("E %d %d %d %d %d %d %d\n", data4[1],data4[2],data4[3],data4[4],data4[5],data4[6],data4[7]));
 			this.target_floor = callSyscall(data1,data2,data3,data4);
 			if(this.target_floor > this.elevator.nowFloor)
 				this.elevator.stateUpDown = StateUpDown.UP;
@@ -497,7 +501,7 @@ public class MainActivity2 extends Activity{
 				n = -1;
 				btn = -1;
 				if(this.elevator.stateMove == StateMove.STOP) {
-					
+					//System.out.println("stop");
 					if(this.elevator.stateStop == StateStop.OPEN) {
 						stoptic = (stoptic + 2 > 80)? 80 : stoptic + 2;
 						if(stoptic >= 80) {//closing
@@ -510,7 +514,7 @@ public class MainActivity2 extends Activity{
 						}
 						else{//in open
 							Floor temp = floors.get(this.elevator.nowFloor-1);
-							boolean isNotFull = false;
+							boolean isNotFull = true;
 							for(int i=0 ; i < temp.people.size();++i) {
 								if(this.elevator.nowFloor == 1 || this.elevator.nowFloor == 7 || this.elevator.stateUpDown == StateUpDown.NONE ||temp.people.get(i).state == this.elevator.stateUpDown) {
 									if(this.elevator.addPerson()) {
@@ -523,8 +527,14 @@ public class MainActivity2 extends Activity{
 									}
 								}
 							}
-							if(isNotFull)
-								temp.buttonState = StateUpDown.getState(temp.buttonState.getValue() - this.elevator.stateUpDown.getValue());
+							if(isNotFull){
+								
+								int result = 0;
+								for(int i = 0 ; i <temp.people.size();i++){
+									result |= temp.people.get(i).state.getValue();
+								}
+								temp.buttonState = StateUpDown.getState(result);
+							}
                             else
 							    setBuzzer(dev_1);//1sec ring
 						}
@@ -532,7 +542,7 @@ public class MainActivity2 extends Activity{
 					else if(this.isOpenning() == true){
 						ndk_open_flag = 1;
 						//mService.PlayMusic(MusicService.MusicType.DOOR_OPENING);
-						if(DEBUG == true)
+						
 							System.out.println("opennig");
 						stoptic = 0;
 						this.elevator.stateStop = StateStop.OPEN;
@@ -541,6 +551,7 @@ public class MainActivity2 extends Activity{
                         
 					}
 					else{
+
 						if(this.isIdle() == false){
 							this.elevator.stateMove = StateMove.MOVE;
 					        this.calculTarget();
@@ -555,18 +566,23 @@ public class MainActivity2 extends Activity{
 						movetic = (movetic - 2 < 0) ? 0 : movetic - 2;
 
 					if(movetic % 100 == 0) {//arrive floor
+						
 						if(DEBUG == true)
 							System.out.println("floorarrive");
 						int num = movetic /100;
 						//destination of elev or there is passenger in arrive floor
 						this.elevator.nowFloor = num + 1;
+
+						System.out.println(String.format("now : %d  target: %d \n",num+1,this.target_floor));
 						if(this.elevator.nowFloor == this.target_floor) {
 							if(DEBUG == true)
 								System.out.println("stopping");
 							this.openREQ = true;
 							this.elevator.stateMove = StateMove.STOP;
+							this.elevator.stateStop = StateStop.IDLE;
 							this.elevator.btnstate[num] = false;
 					        this.calculTarget();
+					        System.out.println(String.format("now : %d  target: %d \n",num+1,this.target_floor));
 						}
 					}
 
@@ -576,7 +592,7 @@ public class MainActivity2 extends Activity{
 				btn = getIntrBtn(dev_1);
 
 				if(n != -1) {
-					if(0<= n && n <=6 && this.elevator.personNum > 0){
+					if(0<= n && n <=6 && personNum > 0){
 						this.elevator.btnstate[n] = true;
 					    this.calculTarget();
                     }

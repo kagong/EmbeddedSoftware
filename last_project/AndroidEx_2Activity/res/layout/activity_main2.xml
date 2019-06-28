@@ -120,7 +120,11 @@
 		    android:layout_height="65dp"
 		    android:background="@android:color/black"
 		  	android:layout_marginTop="434dp"
-		    android:text="TextView" />
+		    android:text="TextView"
+		    android:textColor="@android:color/white"
+		    android:gravity="center_horizontal"
+		    android:textSize="25sp"/>
+		
 
 	></LinearLayout>
     
