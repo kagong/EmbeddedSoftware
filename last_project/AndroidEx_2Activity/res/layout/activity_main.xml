@@ -1,0 +1,41 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="center"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/TextView01"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:paddingBottom="100dp"
+        android:paddingTop="50dp"
+        android:text="Elevator Simulation"
+        android:textSize="30sp" />
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:paddingBottom="50dp"
+        android:paddingTop="50dp"
+        android:text="Made by\nHwang Kideok\nYoon Jaehyung\nChung Jaehoon"
+        android:textAlignment='gravity'
+        android:textAppearance="@style/AppTheme"
+        android:textSize="20sp" />
+
+    <Button
+        android:id="@+id/newactivity"
+        style="@style/AppTheme"
+        android:layout_width="269dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:padding="0dp"
+        android:paddingTop="0dp"
+        android:text="Start" />
+    
+</LinearLayout>
